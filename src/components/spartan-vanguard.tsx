@@ -66,7 +66,8 @@ function CrestSVG() {
   const ticks = Array.from({ length: 60 }, (_, i) => {
     const a = (i / 60) * Math.PI * 2
     const r = 162
-    return <line key={i} x1={200 + Math.cos(a) * r} y1={200 + Math.sin(a) * r} x2={200 + Math.cos(a) * (r - 6)} y2={200 + Math.sin(a) * (r - 6)} stroke="url(#gC1)" strokeWidth="1" />
+    const f = (n: number) => n.toFixed(3)
+    return <line key={i} x1={f(200 + Math.cos(a) * r)} y1={f(200 + Math.sin(a) * r)} x2={f(200 + Math.cos(a) * (r - 6))} y2={f(200 + Math.sin(a) * (r - 6))} stroke="url(#gC1)" strokeWidth="1" />
   })
   return (
     <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style={{ width: '52%', opacity: 0.96 }}>
@@ -128,6 +129,8 @@ export default function SpartanVanguard({ announcements, events, officers, confi
   const [hoveredRoute, setHoveredRoute] = useState<string | null>(null)
   const navLinksRef = useRef<HTMLDivElement>(null)
   const navPillRef = useRef<HTMLSpanElement>(null)
+  const pillFirstRunRef = useRef(true)
+  const clickScrollRef = useRef<number | null>(null)
 
   /* --- derived config -------------------------------------------- */
   const announcementText = config['announcement_text'] || 'Spartan Vanguard hosts an annual spring math competition for middle and high school students. Organized and run entirely by high school volunteers, the event takes place at La Ca\u00f1ada High School. We welcome anyone with an interest in competitive math to join us, and participants and volunteers can enjoy free pizza!'
@@ -162,6 +165,9 @@ export default function SpartanVanguard({ announcements, events, officers, confi
     const el = document.getElementById(id)
     if (!el) return
     const top = el.getBoundingClientRect().top + window.scrollY
+    setActiveSection(id)
+    if (clickScrollRef.current) window.clearTimeout(clickScrollRef.current)
+    clickScrollRef.current = window.setTimeout(() => { clickScrollRef.current = null }, 900)
     window.scrollTo({ top, behavior: 'smooth' })
   }
 
@@ -173,6 +179,13 @@ export default function SpartanVanguard({ announcements, events, officers, confi
         if (!child.hasAttribute('data-reveal') && !child.classList.contains('reveal')) {
           child.classList.add('reveal')
           child.setAttribute('data-reveal', 'up')
+        }
+      })
+    })
+    document.querySelectorAll('.tiles, .officer-grid, .res-grid, .comp-list, .event-meta-row, .hero-links').forEach(container => {
+      Array.from(container.children).forEach((child, i) => {
+        if (child.classList.contains('reveal') || child.hasAttribute('data-reveal')) {
+          (child as HTMLElement).style.setProperty('--i', String(Math.min(i, 6)))
         }
       })
     })
@@ -188,12 +201,16 @@ export default function SpartanVanguard({ announcements, events, officers, confi
           e.target.classList.remove('in')
         }
       })
-    }, { threshold: [0, 0.08, 1], rootMargin: '0px 0px -60px 0px' })
+    }, { threshold: 0, rootMargin: '120px 0px 120px 0px' })
 
     document.querySelectorAll('[data-reveal]').forEach(el => {
       const r = el.getBoundingClientRect()
-      if (r.top < window.innerHeight * 0.85) {
-        el.classList.add('in')
+      if (r.top < window.innerHeight && r.bottom > 0) {
+        el.classList.add('instant', 'in')
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => el.classList.remove('instant'))
+        })
+        observer.observe(el)
       } else {
         observer.observe(el)
       }
@@ -205,16 +222,26 @@ export default function SpartanVanguard({ announcements, events, officers, confi
   /* --- scroll spy ------------------------------------------------ */
   useEffect(() => {
     let raf: number | null = null
+    let lastY = window.scrollY
+    let idleTimer: number | null = null
     const onScroll = () => {
       if (raf) return
       raf = requestAnimationFrame(() => {
         raf = null
-        const viewportMid = window.scrollY + window.innerHeight * 0.35
+        const y = window.scrollY
+        if (y !== lastY) {
+          document.body.dataset.scrollDir = y > lastY ? 'down' : 'up'
+          lastY = y
+          if (idleTimer) window.clearTimeout(idleTimer)
+          idleTimer = window.setTimeout(() => { delete document.body.dataset.scrollDir }, 600)
+        }
+        if (clickScrollRef.current) return
+        const viewportMid = y + window.innerHeight * 0.35
         let current = 'home'
         for (const s of SECTIONS) {
           const el = document.getElementById(s.id)
           if (!el) continue
-          const top = el.getBoundingClientRect().top + window.scrollY
+          const top = el.getBoundingClientRect().top + y
           if (top <= viewportMid) current = s.id
         }
         setActiveSection(current)
@@ -222,32 +249,42 @@ export default function SpartanVanguard({ announcements, events, officers, confi
     }
     window.addEventListener('scroll', onScroll, { passive: true })
     onScroll()
-    return () => window.removeEventListener('scroll', onScroll)
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      if (idleTimer) window.clearTimeout(idleTimer)
+    }
   }, [])
 
   /* --- nav pill -------------------------------------------------- */
   useEffect(() => {
+    const pill = navPillRef.current
+    if (!pill) return
+
     const target = hoveredRoute
       ? navLinksRef.current?.querySelector(`[data-route="${hoveredRoute}"]`)
       : navLinksRef.current?.querySelector('.nav-link.active')
 
-    if (target && navLinksRef.current && navPillRef.current) {
+    if (target && navLinksRef.current) {
       const navRect = navLinksRef.current.getBoundingClientRect()
       const borderLeft = parseFloat(getComputedStyle(navLinksRef.current).borderLeftWidth) || 0
       const linkRect = (target as HTMLElement).getBoundingClientRect()
       const x = linkRect.left - navRect.left - borderLeft
       const w = linkRect.width
-      navPillRef.current.style.setProperty('--pill-transform', `translate(${x}px, -50%)`)
-      navPillRef.current.style.transform = `translate(${x}px, -50%)`
-      navPillRef.current.style.width = w + 'px'
-      navPillRef.current.classList.add('visible')
-      if (!hoveredRoute) {
-        navPillRef.current.classList.remove('settling')
-        void navPillRef.current.offsetWidth
-        navPillRef.current.classList.add('settling')
+
+      if (pillFirstRunRef.current) {
+        pill.style.transition = 'opacity 320ms ease'
+        pill.style.transform = `translate(${x}px, -50%)`
+        pill.style.width = w + 'px'
+        void pill.offsetWidth
+        pill.style.transition = ''
+        pillFirstRunRef.current = false
+      } else {
+        pill.style.transform = `translate(${x}px, -50%)`
+        pill.style.width = w + 'px'
       }
-    } else if (navPillRef.current) {
-      navPillRef.current.classList.remove('visible')
+      pill.classList.add('visible')
+    } else {
+      pill.classList.remove('visible')
     }
   }, [activeSection, hoveredRoute])
 
@@ -257,6 +294,10 @@ export default function SpartanVanguard({ announcements, events, officers, confi
 
   return (
     <>
+      {/* -- Edge Fades -- */}
+      <div className="edge-fade edge-fade-top" aria-hidden="true" />
+      <div className="edge-fade edge-fade-bottom" aria-hidden="true" />
+
       {/* -- Brand Bar -- */}
       <a href="#home" className="brand-bar" onClick={(e) => { e.preventDefault(); scrollToSection('home') }}>
         <span className="crest-mini">SV</span>
@@ -266,7 +307,7 @@ export default function SpartanVanguard({ announcements, events, officers, confi
       {/* -- Bottom Dock Navigation -- */}
       <nav className="nav">
         <div className="nav-inner">
-          <div className="nav-right" ref={navLinksRef}>
+          <div className="nav-right" ref={navLinksRef} onMouseLeave={() => setHoveredRoute(null)}>
             <span className="nav-pill" ref={navPillRef} aria-hidden="true" />
             {SECTIONS.map(s => (
               <a
@@ -276,7 +317,6 @@ export default function SpartanVanguard({ announcements, events, officers, confi
                 data-route={s.id}
                 onClick={(e) => { e.preventDefault(); scrollToSection(s.id) }}
                 onMouseEnter={() => setHoveredRoute(s.id)}
-                onMouseLeave={() => setHoveredRoute(null)}
               >
                 {s.label}
               </a>
@@ -418,56 +458,19 @@ export default function SpartanVanguard({ announcements, events, officers, confi
             <div className="tile col-6 gold-bg reveal" data-reveal style={{ minHeight: '240px' }}>
               <div>
                 <div className="tile-eyebrow">{m1Parts[0] || 'Grades 9\u201310'}</div>
-                <h3 className="tile-title">{(m1Parts[1] || 'Monday, 3:30\u20135:00 PM').split(',').map((part, i) => i === 0 ? part.trim() : <><br key={i} />{part.trim()}</>)}</h3>
+                <h3 className="tile-title">{(m1Parts[1] || 'Monday, 3:30\u20135:00 PM').split(',').map((part, i) => i === 0 ? part.trim() : <React.Fragment key={i}><br />{part.trim()}</React.Fragment>)}</h3>
                 <p className="tile-desc" style={{ marginTop: '12px' }}>{m1Parts[2] || 'Room 217'}</p>
               </div>
             </div>
             <div className="tile col-6 reveal" data-reveal style={{ minHeight: '240px' }}>
               <div>
                 <div className="tile-eyebrow">{m2Parts[0] || 'Grades 7\u20138'}</div>
-                <h3 className="tile-title">{(m2Parts[1] || 'Wednesday, 3:30\u20134:30 PM').split(',').map((part, i) => i === 0 ? part.trim() : <><br key={i} />{part.trim()}</>)}</h3>
+                <h3 className="tile-title">{(m2Parts[1] || 'Wednesday, 3:30\u20134:30 PM').split(',').map((part, i) => i === 0 ? part.trim() : <React.Fragment key={i}><br />{part.trim()}</React.Fragment>)}</h3>
                 <p className="tile-desc" style={{ marginTop: '12px' }}>{m2Parts[2] || 'Room 724'}</p>
               </div>
             </div>
           </section>
 
-          {/* Officers */}
-          <section className="officers-section">
-            <div className="h2 reveal" data-reveal>2025&ndash;2026 Officers.</div>
-            <div className="officer-grid">
-              {officers.map((officer) => (
-                <div key={officer.id} className="officer-card reveal" data-reveal>
-                  <div className="officer-avatar">{getInitials(officer.name)}</div>
-                  <div>
-                    <div className="officer-name">{officer.name}</div>
-                    <div className="officer-role">{officer.role}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Contact */}
-          <section className="officers-section" style={{ paddingTop: '20px', paddingBottom: '80px' }}>
-            <div className="h2 reveal" data-reveal>Contact.</div>
-            <div className="reveal" data-reveal style={{ marginTop: '24px', display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '12px' }}>
-              <div style={{ padding: '24px', background: 'var(--bg-tile)', borderRadius: 'var(--radius-md)' }}>
-                <div style={{ fontSize: '12px', color: 'var(--fg-muted)', marginBottom: '6px' }}>Google Classroom</div>
-                <div style={{ fontFamily: 'var(--mono)', fontSize: '16px', fontWeight: 500 }}>{classroomCode}</div>
-              </div>
-              <div style={{ padding: '24px', background: 'var(--bg-tile)', borderRadius: 'var(--radius-md)' }}>
-                <div style={{ fontSize: '12px', color: 'var(--fg-muted)', marginBottom: '6px' }}>Remind</div>
-                <div style={{ fontFamily: 'var(--mono)', fontSize: '16px', fontWeight: 500 }}>{remindCode}</div>
-              </div>
-              <div style={{ padding: '24px', background: 'var(--bg-tile)', borderRadius: 'var(--radius-md)' }}>
-                <div style={{ fontSize: '12px', color: 'var(--fg-muted)', marginBottom: '6px' }}>Email</div>
-                <div style={{ fontSize: '14px', fontWeight: 500, letterSpacing: '-0.01em' }}>
-                  <a href={`mailto:${email1}`} style={{ color: 'var(--accent)' }}>{email1}</a><br />
-                  <a href={`mailto:${email2}`} style={{ color: 'var(--accent)' }}>{email2}</a>
-                </div>
-              </div>
-            </div>
-          </section>
         </section>
 
         {/* ============================================================ */}
