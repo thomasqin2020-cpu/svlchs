@@ -33,19 +33,19 @@ const resources = [
   { name: 'Art of Problem Solving Volumes 1 & 2', description: 'Comprehensive books covering AMC 8/10/12, AIME, and beyond. Volume 2 also available.', link: 'https://artofproblemsolving.com/store/book/aops-vol1' },
   { name: "David Altizio's Geometry Collection", description: '100 geometry problems ranging from mid-AMC to IMO level.', link: 'https://davidaltizio.web.illinois.edu/CollectionOfGeometryProblems.pdf' },
   { name: 'AoPS \u2014 Avoiding Mistakes', description: 'Article on common errors in competition problem-solving.', link: 'https://artofproblemsolving.com/blog/articles/stop-making-stupid-mistakes' },
-  { name: 'AIME Problem Set', description: 'Collection of past AIME problems for practice.', link: 'https://drive.google.com/drive/folders/0B95dMlY7fstOemlzdThlZjFCUnc?resourcekey=0-NQq-JWyy0wc0Db34sIIZ9A' },
-  { name: '\u201cHow to Solve It\u201d by George Polya', description: 'Classic problem-solving methodology guide.', link: 'http://www.im.ufrj.br/~monica/funcoes/Polya.pdf' },
+  { name: 'AIME Problem Set', description: 'Collection of past AIME problems for practice.', link: 'https://artofproblemsolving.com/wiki/index.php/AIME_Problems_and_Solutions' },
+  { name: '\u201cHow to Solve It\u201d by George Polya', description: 'Classic problem-solving methodology guide.', link: 'https://www.hlevkin.com/hlevkin/90MathPhysBioBooks/Math/Polya/George_Polya_How_To_Solve_It_.pdf' },
   { name: 'AoPS Resource Wiki', description: 'Aggregated math competition resources.', link: 'https://artofproblemsolving.com/wiki/index.php/Resources_for_mathematics_competitions' },
 ]
 
 const worksheets = [
-  { name: 'Bases Worksheet', description: 'Number bases practice problems.' },
-  { name: 'Complex Numbers Worksheet', description: 'Introduction to complex numbers in competition math.' },
+  { name: 'Bases Worksheet', description: 'Number bases practice problems.', link: 'https://drive.google.com/file/d/1xc_R8Z1LmBVqzCMbRCdx0iQIgvWaMlwo/view?pli=1' },
+  { name: 'Complex Numbers Worksheet', description: 'Introduction to complex numbers in competition math.', link: 'https://drive.google.com/file/d/1dVw1vMhqJ5IX87OU81cIY__Earx5hPOD/view?pli=1' },
 ]
 
 const activities = [
-  { name: 'Google Form Escape Room', description: 'Interactive math puzzle escape room.' },
-  { name: 'Competition Math Iceberg', description: 'In progress \u2014 accepting topic suggestions.' },
+  { name: 'Google Form Escape Room', description: 'Interactive math puzzle escape room.', link: 'https://docs.google.com/forms/d/e/1FAIpQLSfzYQFY0ZPJRMfpnZmW7gLN-OHirWjXH5LZ7xT7O_wbZ-rbww/viewform' },
+  { name: 'Competition Math Iceberg', description: 'In progress \u2014 accepting topic suggestions.', link: 'https://docs.google.com/file/d/109wIAfA2XgqVE4ihQ8AAKvDXlT8n49MyAbyS227wMFk/edit' },
 ]
 
 /* ------------------------------------------------------------------ */
@@ -542,6 +542,9 @@ export default function SpartanVanguard({ announcements, events, officers, confi
                 <div key={w.name} className="res-card reveal" data-reveal>
                   <div className="res-title">{w.name}</div>
                   <div className="res-desc">{w.description}</div>
+                  {w.link && (
+                    <a href={w.link} target="_blank" rel="noopener noreferrer" className="res-cta">Open &rarr;</a>
+                  )}
                 </div>
               ))}
             </div>
@@ -552,6 +555,9 @@ export default function SpartanVanguard({ announcements, events, officers, confi
                 <div key={a.name} className="res-card reveal" data-reveal>
                   <div className="res-title">{a.name}</div>
                   <div className="res-desc">{a.description}</div>
+                  {a.link && (
+                    <a href={a.link} target="_blank" rel="noopener noreferrer" className="res-cta">Open &rarr;</a>
+                  )}
                 </div>
               ))}
             </div>
