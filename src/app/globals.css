@@ -263,6 +263,17 @@ body[data-scroll-dir="up"] .edge-fade-bottom { opacity: 1; }
 .hero-content { position: relative; z-index: 2; }
 
 /* Hero title character stagger */
+.hero-line { display: block; }
+.hero-line-balanced {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: baseline;
+}
+.hero-half { white-space: nowrap; }
+.hero-half-right { text-align: right; }
+.hero-half-left { text-align: left; }
+.hero-gap { white-space: pre; }
+.hero-word { display: inline-block; white-space: nowrap; }
 .hero-char {
   display: inline-block;
   opacity: 0;
@@ -392,6 +403,13 @@ body[data-scroll-dir="up"] .edge-fade-bottom { opacity: 1; }
   pointer-events: none;
 }
 .hero-visual .crest-big { width: 52%; opacity: 0.96; }
+.crest-svg {
+  opacity: 0.48;
+  mix-blend-mode: screen;
+  mask-image: radial-gradient(circle at 50% 50%, black 40%, rgba(0,0,0,0.55) 68%, transparent 100%);
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, black 40%, rgba(0,0,0,0.55) 68%, transparent 100%);
+  filter: drop-shadow(0 0 30px rgba(176, 141, 58, 0.15));
+}
 
 /* ──────────────────────────────────────────────
    TILE GRID

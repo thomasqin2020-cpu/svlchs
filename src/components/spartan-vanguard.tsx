@@ -106,7 +106,7 @@ function CrestSVG() {
     return <line key={i} x1={f(200 + Math.cos(a) * r)} y1={f(200 + Math.sin(a) * r)} x2={f(200 + Math.cos(a) * (r - 6))} y2={f(200 + Math.sin(a) * (r - 6))} stroke="url(#gC1)" strokeWidth="1" />
   })
   return (
-    <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style={{ width: '52%', opacity: 0.96 }}>
+    <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" className="crest-svg" style={{ width: '52%' }}>
       <defs>
         <radialGradient id="gC1" cx="50%" cy="45%" r="55%">
           <stop offset="0%" stopColor="#efdba4" />
@@ -144,22 +144,30 @@ function CrestSVG() {
 function HeroTitle() {
   const [ready, setReady] = useState(false)
   useEffect(() => { const t = window.setTimeout(() => setReady(true), 40); return () => window.clearTimeout(t) }, [])
-  const part1 = 'Spartan Vanguard\u00A0'
-  const part2 = 'Math Club.'
-  const renderChar = (c: string, i: number, offset: number) => (
-    <span
-      key={`c-${i}-${offset}`}
-      className={`hero-char${ready ? ' in' : ''}`}
-      style={{ transitionDelay: `${(i + offset) * 28}ms`, whiteSpace: 'pre' }}
-    >
-      {c}
+  const renderWord = (word: string, startIdx: number) => (
+    <span className="hero-word">
+      {word.split('').map((c, i) => (
+        <span
+          key={`${startIdx}-${i}`}
+          className={`hero-char${ready ? ' in' : ''}`}
+          style={{ transitionDelay: `${(startIdx + i) * 28}ms` }}
+        >
+          {c}
+        </span>
+      ))}
     </span>
   )
   return (
     <h1>
-      {part1.split('').map((c, i) => renderChar(c, i, 0))}
-      <span className="grad">
-        {part2.split('').map((c, i) => renderChar(c, i, part1.length))}
+      <span className="hero-line hero-line-balanced">
+        <span className="hero-half hero-half-right">{renderWord('Spartan', 0)}</span>
+        <span className="hero-gap" aria-hidden="true">&nbsp;</span>
+        <span className="hero-half hero-half-left">{renderWord('Vanguard', 7)}</span>
+      </span>
+      <span className="hero-line grad">
+        {renderWord('Math', 15)}
+        {' '}
+        {renderWord('Club.', 19)}
       </span>
     </h1>
   )
