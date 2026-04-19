@@ -62,7 +62,43 @@ function Chev() {
   )
 }
 
+const CREST_SYMBOLS = [
+  { char: '\u03C0', x: 120, y: 140, size: 22 },
+  { char: '\u03B8', x: 200, y: 124, size: 22 },
+  { char: '\u2211', x: 280, y: 140, size: 22 },
+  { char: '\u03B1', x: 110, y: 220, size: 22 },
+  { char: '\u222B', x: 290, y: 220, size: 22 },
+  { char: '\u0394', x: 125, y: 285, size: 20 },
+  { char: '\u03A9', x: 200, y: 296, size: 20 },
+  { char: '\u03C6', x: 275, y: 285, size: 20 },
+]
+
 function CrestSVG() {
+  const symbolRefs = useRef<(SVGTextElement | null)[]>([])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+    let raf = 0
+    const start = performance.now()
+    const loop = (now: number) => {
+      const t = (now - start) / 1000
+      symbolRefs.current.forEach((el, i) => {
+        if (!el) return
+        const base = CREST_SYMBOLS[i]
+        const phase = t * (1 / (2.2 + (i * 0.35))) * Math.PI * 2 + (i * 0.8)
+        const dx = Math.sin(phase) * 1.6
+        const dy = Math.cos(phase * 0.9 + (i * 0.3)) * 1.4
+        el.setAttribute('x', (base.x + dx).toFixed(3))
+        el.setAttribute('y', (base.y + dy).toFixed(3))
+      })
+      raf = requestAnimationFrame(loop)
+    }
+    raf = requestAnimationFrame(loop)
+    return () => cancelAnimationFrame(raf)
+  }, [])
+
   const ticks = Array.from({ length: 60 }, (_, i) => {
     const a = (i / 60) * Math.PI * 2
     const r = 162
@@ -83,14 +119,17 @@ function CrestSVG() {
       <g>{ticks}</g>
       <circle cx="200" cy="200" r="120" fill="none" stroke="url(#gC1)" strokeWidth="0.6" opacity="0.6" />
       <g fontFamily="var(--display)" fontStyle="italic" fill="url(#gC1)" textAnchor="middle" opacity="0.9">
-        <text x="120" y="140" fontSize="22">{'\u03C0'}</text>
-        <text x="200" y="124" fontSize="22">{'\u03B8'}</text>
-        <text x="280" y="140" fontSize="22">{'\u2211'}</text>
-        <text x="110" y="220" fontSize="22">{'\u03B1'}</text>
-        <text x="290" y="220" fontSize="22">{'\u222B'}</text>
-        <text x="125" y="285" fontSize="20">{'\u0394'}</text>
-        <text x="200" y="296" fontSize="20">{'\u03A9'}</text>
-        <text x="275" y="285" fontSize="20">{'\u03C6'}</text>
+        {CREST_SYMBOLS.map((s, i) => (
+          <text
+            key={s.char}
+            ref={(el) => { symbolRefs.current[i] = el }}
+            x={s.x}
+            y={s.y}
+            fontSize={s.size}
+          >
+            {s.char}
+          </text>
+        ))}
       </g>
       <g textAnchor="middle">
         <text x="175" y="212" fontFamily="var(--display)" fontSize="60" fontWeight="700" fill="url(#gC1)" letterSpacing="-2">S</text>
@@ -100,6 +139,47 @@ function CrestSVG() {
     </svg>
   )
 }
+
+/* ---- Animated hero title (character stagger via CSS) -------------- */
+function HeroTitle() {
+  const [ready, setReady] = useState(false)
+  useEffect(() => { const t = window.setTimeout(() => setReady(true), 40); return () => window.clearTimeout(t) }, [])
+  const part1 = 'Spartan Vanguard\u00A0'
+  const part2 = 'Math Club.'
+  const renderChar = (c: string, i: number, offset: number) => (
+    <span
+      key={`c-${i}-${offset}`}
+      className={`hero-char${ready ? ' in' : ''}`}
+      style={{ transitionDelay: `${(i + offset) * 28}ms`, whiteSpace: 'pre' }}
+    >
+      {c}
+    </span>
+  )
+  return (
+    <h1>
+      {part1.split('').map((c, i) => renderChar(c, i, 0))}
+      <span className="grad">
+        {part2.split('').map((c, i) => renderChar(c, i, part1.length))}
+      </span>
+    </h1>
+  )
+}
+
+/* ---- Drifting math-symbol constellation --------------------------- */
+const CONSTELLATION = [
+  { char: '\u03C0', x: 6, y: 12, delay: 0, dur: 14 },
+  { char: '\u03B8', x: 22, y: 38, delay: 2.5, dur: 11 },
+  { char: '\u2211', x: 14, y: 70, delay: 1, dur: 16 },
+  { char: '\u03B1', x: 40, y: 18, delay: 3.5, dur: 13 },
+  { char: '\u222B', x: 58, y: 55, delay: 0.8, dur: 15 },
+  { char: '\u0394', x: 72, y: 22, delay: 2, dur: 12 },
+  { char: '\u03A9', x: 86, y: 48, delay: 4, dur: 14 },
+  { char: '\u03C6', x: 92, y: 78, delay: 1.5, dur: 13 },
+  { char: '\u03BB', x: 32, y: 82, delay: 3, dur: 15 },
+  { char: '\u03C8', x: 66, y: 8, delay: 0.3, dur: 12 },
+  { char: '\u221A', x: 78, y: 66, delay: 2.2, dur: 17 },
+  { char: '\u221E', x: 48, y: 88, delay: 1.8, dur: 14 },
+]
 
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/)
@@ -129,8 +209,10 @@ export default function SpartanVanguard({ announcements, events, officers, confi
   const [hoveredRoute, setHoveredRoute] = useState<string | null>(null)
   const navLinksRef = useRef<HTMLDivElement>(null)
   const navPillRef = useRef<HTMLSpanElement>(null)
+  const navPillInnerRef = useRef<HTMLSpanElement>(null)
   const pillFirstRunRef = useRef(true)
   const clickScrollRef = useRef<number | null>(null)
+  const scrollProgressRef = useRef<HTMLDivElement>(null)
 
   /* --- derived config -------------------------------------------- */
   const announcementText = config['announcement_text'] || 'Spartan Vanguard hosts an annual spring math competition for middle and high school students. Organized and run entirely by high school volunteers, the event takes place at La Ca\u00f1ada High School. We welcome anyone with an interest in competitive math to join us, and participants and volunteers can enjoy free pizza!'
@@ -219,6 +301,57 @@ export default function SpartanVanguard({ announcements, events, officers, confi
     return () => observer.disconnect()
   }, [])
 
+  /* --- global 3D tilt on all rounded tiles/cards ---------------- */
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+    const cards = document.querySelectorAll<HTMLElement>('.tile, .officer-card, .res-card')
+    const cleanups: Array<() => void> = []
+    cards.forEach(el => {
+      if (el.dataset.tiltBound) return
+      el.dataset.tiltBound = '1'
+      el.style.transformStyle = 'preserve-3d'
+
+      let raf: number | null = null
+      let rx = 0, ry = 0, tx = 0, ty = 0
+      const render = () => {
+        rx += (tx - rx) * 0.16
+        ry += (ty - ry) * 0.16
+        const atRest = Math.abs(tx - rx) < 0.02 && Math.abs(ty - ry) < 0.02 && tx === 0 && ty === 0
+        if (atRest) {
+          el.style.transform = ''
+          raf = null
+          return
+        }
+        el.style.transform = `perspective(900px) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg)`
+        raf = requestAnimationFrame(render)
+      }
+      const move = (e: MouseEvent) => {
+        const r = el.getBoundingClientRect()
+        const nx = (e.clientX - r.left) / r.width - 0.5
+        const ny = (e.clientY - r.top) / r.height - 0.5
+        tx = ny * -6
+        ty = nx * 6
+        if (raf === null) raf = requestAnimationFrame(render)
+      }
+      const leave = () => {
+        tx = 0; ty = 0
+        if (raf === null) raf = requestAnimationFrame(render)
+      }
+      el.addEventListener('mousemove', move)
+      el.addEventListener('mouseleave', leave)
+      cleanups.push(() => {
+        el.removeEventListener('mousemove', move)
+        el.removeEventListener('mouseleave', leave)
+        delete el.dataset.tiltBound
+        el.style.transform = ''
+        if (raf) cancelAnimationFrame(raf)
+      })
+    })
+    return () => cleanups.forEach(fn => fn())
+  }, [])
+
   /* --- scroll spy ------------------------------------------------ */
   useEffect(() => {
     let raf: number | null = null
@@ -234,6 +367,11 @@ export default function SpartanVanguard({ announcements, events, officers, confi
           lastY = y
           if (idleTimer) window.clearTimeout(idleTimer)
           idleTimer = window.setTimeout(() => { delete document.body.dataset.scrollDir }, 600)
+        }
+        if (scrollProgressRef.current) {
+          const max = document.documentElement.scrollHeight - window.innerHeight
+          const ratio = max > 0 ? Math.min(1, Math.max(0, y / max)) : 0
+          scrollProgressRef.current.style.transform = `scaleX(${ratio})`
         }
         if (clickScrollRef.current) return
         const viewportMid = y + window.innerHeight * 0.35
@@ -288,13 +426,44 @@ export default function SpartanVanguard({ announcements, events, officers, confi
     }
   }, [activeSection, hoveredRoute])
 
+  /* --- magnetic pill --------------------------------------------- */
+  useEffect(() => {
+    const nav = navLinksRef.current
+    const inner = navPillInnerRef.current
+    if (!nav || !inner) return
+    let raf: number | null = null
+    const onMove = (e: MouseEvent) => {
+      if (raf) return
+      raf = requestAnimationFrame(() => {
+        raf = null
+        if (!hoveredRoute) { inner.style.transform = 'translate(0px, 0px)'; return }
+        const link = nav.querySelector(`[data-route="${hoveredRoute}"]`) as HTMLElement | null
+        if (!link) return
+        const r = link.getBoundingClientRect()
+        const dx = (e.clientX - (r.left + r.width / 2)) / (r.width / 2)
+        const dy = (e.clientY - (r.top + r.height / 2)) / (r.height / 2)
+        const mx = Math.max(-3, Math.min(3, dx * 3))
+        const my = Math.max(-2, Math.min(2, dy * 2))
+        inner.style.transform = `translate(${mx}px, ${my}px)`
+      })
+    }
+    const onLeave = () => { inner.style.transform = 'translate(0px, 0px)' }
+    nav.addEventListener('mousemove', onMove)
+    nav.addEventListener('mouseleave', onLeave)
+    return () => {
+      nav.removeEventListener('mousemove', onMove)
+      nav.removeEventListener('mouseleave', onLeave)
+    }
+  }, [hoveredRoute])
+
   /* ================================================================ */
   /*  RENDER                                                          */
   /* ================================================================ */
 
   return (
     <>
-      {/* -- Edge Fades -- */}
+      {/* -- Scroll progress + Edge Fades -- */}
+      <div className="scroll-progress" ref={scrollProgressRef} aria-hidden="true" />
       <div className="edge-fade edge-fade-top" aria-hidden="true" />
       <div className="edge-fade edge-fade-bottom" aria-hidden="true" />
 
@@ -308,7 +477,9 @@ export default function SpartanVanguard({ announcements, events, officers, confi
       <nav className="nav">
         <div className="nav-inner">
           <div className="nav-right" ref={navLinksRef} onMouseLeave={() => setHoveredRoute(null)}>
-            <span className="nav-pill" ref={navPillRef} aria-hidden="true" />
+            <span className="nav-pill" ref={navPillRef} aria-hidden="true">
+              <span className="nav-pill-inner" ref={navPillInnerRef} />
+            </span>
             {SECTIONS.map(s => (
               <a
                 key={s.id}
@@ -358,21 +529,31 @@ export default function SpartanVanguard({ announcements, events, officers, confi
 
           {/* Hero */}
           <section className="hero reveal" data-reveal>
-            <h1>Spartan Vanguard <span className="grad">Math Club.</span></h1>
-            <p className="hero-sub">
-              Extracurricular math, problem solving, and competitions at La Ca&ntilde;ada High School. Sharpen your skills, join a team, and compete in AMC, AIME, BMT, and more.
-            </p>
-            <div className="hero-links">
-              <a href="#announcements" className="link-cta" onClick={(e) => { e.preventDefault(); const el = document.getElementById('announcements'); if (el) el.scrollIntoView({ behavior: 'smooth' }) }}>
-                Announcements <Chev />
-              </a>
-              <a href="#meetings" className="link-cta" onClick={(e) => { e.preventDefault(); const el = document.getElementById('meetings'); if (el) el.scrollIntoView({ behavior: 'smooth' }) }}>
-                Meeting Schedule <Chev />
-              </a>
+            <div className="constellation" aria-hidden="true">
+              {CONSTELLATION.map((g, i) => (
+                <span
+                  key={i}
+                  style={{ left: `${g.x}%`, top: `${g.y}%`, animationDelay: `${g.delay}s`, animationDuration: `${g.dur}s` }}
+                >{g.char}</span>
+              ))}
             </div>
+            <div className="hero-content">
+              <HeroTitle />
+              <p className="hero-sub">
+                Extracurricular math, problem solving, and competitions at La Ca&ntilde;ada High School. Sharpen your skills, join a team, and compete in AMC, AIME, BMT, and more.
+              </p>
+              <div className="hero-links">
+                <a href="#announcements" className="link-cta" onClick={(e) => { e.preventDefault(); const el = document.getElementById('announcements'); if (el) el.scrollIntoView({ behavior: 'smooth' }) }}>
+                  Announcements <Chev />
+                </a>
+                <a href="#meetings" className="link-cta" onClick={(e) => { e.preventDefault(); const el = document.getElementById('meetings'); if (el) el.scrollIntoView({ behavior: 'smooth' }) }}>
+                  Meeting Schedule <Chev />
+                </a>
+              </div>
 
-            <div className="hero-visual" aria-label="Spartan Vanguard logo">
-              <CrestSVG />
+              <div className="hero-visual" aria-label="Spartan Vanguard logo">
+                <CrestSVG />
+              </div>
             </div>
           </section>
 
@@ -473,6 +654,8 @@ export default function SpartanVanguard({ announcements, events, officers, confi
 
         </section>
 
+        <div className="section-divider reveal" data-reveal />
+
         {/* ============================================================ */}
         {/*  COMPETITIONS                                                */}
         {/* ============================================================ */}
@@ -512,6 +695,8 @@ export default function SpartanVanguard({ announcements, events, officers, confi
             ))}
           </div>
         </section>
+
+        <div className="section-divider reveal" data-reveal />
 
         {/* ============================================================ */}
         {/*  RESOURCES                                                   */}
@@ -564,6 +749,8 @@ export default function SpartanVanguard({ announcements, events, officers, confi
           </div>
         </section>
 
+        <div className="section-divider reveal" data-reveal />
+
         {/* ============================================================ */}
         {/*  VMT                                                         */}
         {/* ============================================================ */}
@@ -586,7 +773,7 @@ export default function SpartanVanguard({ announcements, events, officers, confi
 
           {/* VMT Banner */}
           <section className="tiles" style={{ paddingTop: '16px' }}>
-            <div className="tile col-12 reveal" data-reveal style={{ background: 'linear-gradient(135deg,#000 0%,#1d1d1f 100%)', color: '#fff', minHeight: '320px', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+            <div className="tile col-12 reveal" data-reveal style={{ background: 'linear-gradient(135deg,#000 0%,#1d1d1f 100%)', color: '#F8FBF8', minHeight: '320px', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
               <div style={{ maxWidth: '520px', margin: '0 auto' }}>
                 <div style={{ fontFamily: "'Inter Tight'", fontSize: 'clamp(80px,12vw,160px)', fontWeight: 700, letterSpacing: '-0.05em', lineHeight: 1 }}>VMT</div>
               </div>
@@ -664,6 +851,8 @@ export default function SpartanVanguard({ announcements, events, officers, confi
           </section>
         </section>
 
+        <div className="section-divider reveal" data-reveal />
+
         {/* ============================================================ */}
         {/*  ALEPH                                                       */}
         {/* ============================================================ */}
@@ -686,7 +875,7 @@ export default function SpartanVanguard({ announcements, events, officers, confi
 
           {/* Aleph Banner */}
           <section className="tiles" style={{ paddingTop: '16px' }}>
-            <div className="tile col-12 reveal" data-reveal style={{ background: 'linear-gradient(135deg,#1d1d1f 0%,#3a2e0d 100%)', color: '#fff', minHeight: '320px', alignItems: 'center', justifyContent: 'center', textAlign: 'center' as const }}>
+            <div className="tile col-12 reveal" data-reveal style={{ background: 'linear-gradient(135deg,#1d1d1f 0%,#3a2e0d 100%)', color: '#F8FBF8', minHeight: '320px', alignItems: 'center', justifyContent: 'center', textAlign: 'center' as const }}>
               <div style={{ maxWidth: '520px', margin: '0 auto' }}>
                 <div style={{ fontFamily: "'Inter Tight'", fontSize: 'clamp(140px,18vw,220px)', fontWeight: 400, letterSpacing: '-0.02em', lineHeight: 1 }}>{'\u2135'}</div>
               </div>
@@ -734,6 +923,8 @@ export default function SpartanVanguard({ announcements, events, officers, confi
             </div>
           </section>
         </section>
+
+        <div className="section-divider reveal" data-reveal />
 
         {/* ============================================================ */}
         {/*  TEAM                                                        */}
