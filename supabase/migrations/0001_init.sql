@@ -5,19 +5,8 @@
 -- All tables have RLS enabled from day one. Read CLAUDE.md before editing.
 
 -- ----------------------------------------------------------------------------
--- HELPER: is_admin() — checks the current user's role in members table
--- ----------------------------------------------------------------------------
-create or replace function public.is_admin() returns boolean
-language sql security definer stable
-as $$
-  select coalesce(
-    (select role = 'admin' from public.members where id = auth.uid()),
-    false
-  );
-$$;
-
--- ----------------------------------------------------------------------------
 -- members — extends auth.users with profile + role
+-- (created BEFORE is_admin() because the function body references this table)
 -- ----------------------------------------------------------------------------
 create table if not exists public.members (
   id uuid primary key references auth.users(id) on delete cascade,
@@ -30,6 +19,21 @@ create table if not exists public.members (
 );
 alter table public.members enable row level security;
 
+-- ----------------------------------------------------------------------------
+-- HELPER: is_admin() — checks the current user's role in members table.
+-- security definer means it bypasses RLS, so policies that call it on
+-- public.members itself don't recurse infinitely.
+-- ----------------------------------------------------------------------------
+create or replace function public.is_admin() returns boolean
+language sql security definer stable
+as $$
+  select coalesce(
+    (select role = 'admin' from public.members where id = auth.uid()),
+    false
+  );
+$$;
+
+-- Members policies (now that is_admin() exists)
 create policy "members read own row" on public.members
   for select using (auth.uid() = id);
 create policy "admins read all members" on public.members
