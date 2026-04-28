@@ -829,7 +829,7 @@ export default function SpartanVanguard({ announcements, events, officers, confi
             <div className="h2 reveal" data-reveal>Support Us.</div>
             <p className="h2-sub reveal" data-reveal>Our competitions run entirely on donations. Help us cover testing materials, food, and fees so we can keep competitions free.</p>
             <div className="reveal" data-reveal style={{ marginTop: '24px' }}>
-              <a className="pill" href="https://gofund.me/70f62d73d" target="_blank" rel="noopener noreferrer" style={{ background: 'linear-gradient(145deg,#f7ecd0,#e4ce81)', color: '#3a2e0d' }}>Spartan Vanguard GoFundMe 2026 <Chev /></a>
+              <a className="pill" href="/donate" style={{ background: 'linear-gradient(145deg,#f7ecd0,#e4ce81)', color: '#3a2e0d' }}>Donate to Spartan Vanguard <Chev /></a>
             </div>
           </section>
 
@@ -927,7 +927,7 @@ export default function SpartanVanguard({ announcements, events, officers, confi
             <div className="h2 reveal" data-reveal>Support Us.</div>
             <p className="h2-sub reveal" data-reveal>Our competitions run entirely on donations. Help us cover testing materials, food, and fees so we can keep competitions free.</p>
             <div className="reveal" data-reveal style={{ marginTop: '24px' }}>
-              <a className="pill" href="https://gofund.me/70f62d73d" target="_blank" rel="noopener noreferrer" style={{ background: 'linear-gradient(145deg,#f7ecd0,#e4ce81)', color: '#3a2e0d' }}>Spartan Vanguard GoFundMe 2026 <Chev /></a>
+              <a className="pill" href="/donate" style={{ background: 'linear-gradient(145deg,#f7ecd0,#e4ce81)', color: '#3a2e0d' }}>Donate to Spartan Vanguard <Chev /></a>
             </div>
           </section>
         </section>

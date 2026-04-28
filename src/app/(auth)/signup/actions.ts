@@ -1,0 +1,92 @@
+'use server'
+
+import { headers } from 'next/headers'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { sendEmail, notifyOfficers, membershipAckEmail, membershipNotifyEmail } from '@/lib/email'
+
+export interface SignupResult {
+  ok: boolean
+  message: string
+}
+
+/**
+ * Signup flow:
+ *  1. Validate Classroom code against `allowed_classroom_codes` (active=true).
+ *  2. Insert row in `membership_signups` (so officers can see who's joining).
+ *  3. Send a magic link via supabase.auth.signInWithOtp.
+ *  4. On callback (handled in /auth/callback), the user lands signed in;
+ *     a separate server action upserts the `members` profile.
+ */
+export async function signupAction(formData: FormData): Promise<SignupResult> {
+  const email = String(formData.get('email') ?? '').trim().toLowerCase()
+  const code = String(formData.get('classroom_code') ?? '').trim().toLowerCase()
+  const fullName = String(formData.get('full_name') ?? '').trim()
+  const grade = String(formData.get('grade') ?? '').trim()
+  const why = String(formData.get('why_joining') ?? '').trim()
+
+  if (!email || !code || !fullName) {
+    return { ok: false, message: 'Email, name, and Classroom code are required.' }
+  }
+  if (!email.includes('@')) {
+    return { ok: false, message: 'That email looks invalid.' }
+  }
+
+  const supabase = await createSupabaseServerClient()
+  if (!supabase) {
+    return { ok: false, message: 'Sign-up is not configured yet. Try again later.' }
+  }
+
+  // Validate code (RLS allows public read of active codes)
+  const { data: codeRow, error: codeError } = await supabase
+    .from('allowed_classroom_codes')
+    .select('code')
+    .eq('code', code)
+    .eq('active', true)
+    .maybeSingle()
+
+  if (codeError) {
+    console.error('classroom code lookup failed:', codeError)
+    return { ok: false, message: 'Could not verify that Classroom code. Try again.' }
+  }
+  if (!codeRow) {
+    return { ok: false, message: 'That Classroom code is not valid. Ask an officer for the current code.' }
+  }
+
+  // Log the membership signup intent (RLS allows anon insert)
+  const { error: insertError } = await supabase.from('membership_signups').insert({
+    name: fullName,
+    grade: grade || null,
+    email,
+    why_joining: why || null,
+  })
+  if (insertError) {
+    console.error('membership_signups insert failed:', insertError)
+    // Non-fatal — keep going to magic link.
+  } else {
+    // Fire-and-forget emails (don't block on Resend errors).
+    sendEmail({ to: email, subject: 'Welcome to Spartan Vanguard', html: membershipAckEmail(fullName) }).catch(() => {})
+    notifyOfficers({
+      subject: `New SV sign-up: ${fullName}`,
+      html: membershipNotifyEmail({ name: fullName, email, grade, why }),
+    }).catch(() => {})
+  }
+
+  // Build redirect URL for the magic link (uses the site's host).
+  const host = (await headers()).get('host')
+  const protocol = host?.startsWith('localhost') ? 'http' : 'https'
+  const redirectTo = `${protocol}://${host}/auth/callback?next=/`
+
+  const { error: otpError } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      emailRedirectTo: redirectTo,
+      data: { full_name: fullName, grade },
+    },
+  })
+  if (otpError) {
+    console.error('signInWithOtp failed:', otpError)
+    return { ok: false, message: 'Could not send magic link. Try again or contact an officer.' }
+  }
+
+  return { ok: true, message: `Check your inbox at ${email} for a sign-in link.` }
+}

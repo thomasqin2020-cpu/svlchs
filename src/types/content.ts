@@ -4,6 +4,7 @@ export interface Announcement {
   body: string
   date: string
   pinned: boolean
+  membersOnly: boolean
 }
 
 export interface Event {
@@ -23,6 +24,17 @@ export interface Officer {
   name: string
   role: string
   order: number
+  photoUrl: string | null
+  schoolYear: string
 }
 
 export type SiteConfig = Record<string, string>
+
+export interface Member {
+  id: string
+  email: string
+  fullName: string | null
+  grade: string | null
+  schoolYear: string | null
+  role: 'member' | 'admin'
+}
