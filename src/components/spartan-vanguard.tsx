@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
 import type { Announcement, Event, Officer, SiteConfig } from '@/types/content'
 
 /* ------------------------------------------------------------------ */
@@ -226,7 +227,6 @@ export default function SpartanVanguard({ announcements, events, officers, confi
   const announcementText = config['announcement_text'] || 'Spartan Vanguard hosts an annual spring math competition for middle and high school students. Organized and run entirely by high school volunteers, the event takes place at La Ca\u00f1ada High School. We welcome anyone with an interest in competitive math to join us, and participants and volunteers can enjoy free pizza!'
   const meeting1 = config['meeting_1'] || 'Grades 9\u201310 | Monday, 3:30\u20135:00 PM | Room 217'
   const meeting2 = config['meeting_2'] || 'Grades 7\u20138 | Wednesday, 3:30\u20134:30 PM | Room 724'
-  const classroomCode = config['google_classroom'] || 'hsx4c54'
   const remindCode = config['remind'] || '@lchssv'
   const email1 = config['email_1'] || 'vchen26@mylcusd.net'
   const email2 = config['email_2'] || 'nchen26@mylcusd.net'
@@ -958,7 +958,7 @@ export default function SpartanVanguard({ announcements, events, officers, confi
             <div style={{ marginTop: '80px', padding: '40px 0', borderTop: '1px solid var(--line)' }}>
               <div className="h2">Get in touch.</div>
               <p className="h2-sub">
-                Google Classroom &middot; <code style={{ fontFamily: 'var(--mono)' }}>{classroomCode}</code> &mdash; Remind &middot; <code style={{ fontFamily: 'var(--mono)' }}>{remindCode}</code><br />
+                Remind &middot; <code style={{ fontFamily: 'var(--mono)' }}>{remindCode}</code><br />
                 Email: <a href={`mailto:${email1}`} style={{ color: 'var(--accent)' }}>{email1}</a>, <a href={`mailto:${email2}`} style={{ color: 'var(--accent)' }}>{email2}</a>
               </p>
             </div>
@@ -972,10 +972,17 @@ export default function SpartanVanguard({ announcements, events, officers, confi
         <div className="footer-inner">
           <div className="footer-cols">
             <div className="footer-col">
-              <h5>Shop &amp; Compete</h5>
+              <h5>Members</h5>
+              <Link href="/signup">Sign up</Link>
+              <Link href="/login">Log in</Link>
+              <Link href="/donate">Donate</Link>
+              <Link href="/admin">Admin</Link>
+            </div>
+            <div className="footer-col">
+              <h5>Compete</h5>
               <a href="#competitions" onClick={(e) => { e.preventDefault(); scrollToSection('competitions') }}>Competitions</a>
-              <a href="#vmt" onClick={(e) => { e.preventDefault(); scrollToSection('vmt') }}>VMT</a>
-              <a href="#aleph" onClick={(e) => { e.preventDefault(); scrollToSection('aleph') }}>Aleph</a>
+              <Link href="/competitions/vmt/register">VMT register</Link>
+              <Link href="/competitions/aleph/register">Aleph register</Link>
             </div>
             <div className="footer-col">
               <h5>Learn</h5>
@@ -985,16 +992,10 @@ export default function SpartanVanguard({ announcements, events, officers, confi
             </div>
             <div className="footer-col">
               <h5>Contact</h5>
-              <a>Google Classroom &middot; {classroomCode}</a>
+              <Link href="/contact">Contact form</Link>
               <a>Remind &middot; {remindCode}</a>
-              <a>{email1}</a>
-              <a>{email2}</a>
-            </div>
-            <div className="footer-col">
-              <h5>About Spartan Vanguard</h5>
-              <a>Our mission</a>
-              <a>Join the club</a>
-              <a>Volunteer</a>
+              <a href={`mailto:${email1}`}>{email1}</a>
+              <a href={`mailto:${email2}`}>{email2}</a>
             </div>
           </div>
           <div className="legal">

@@ -9,23 +9,14 @@ export interface SignupResult {
   message: string
 }
 
-/**
- * Signup flow:
- *  1. Validate Classroom code against `allowed_classroom_codes` (active=true).
- *  2. Insert row in `membership_signups` (so officers can see who's joining).
- *  3. Send a magic link via supabase.auth.signInWithOtp.
- *  4. On callback (handled in /auth/callback), the user lands signed in;
- *     a separate server action upserts the `members` profile.
- */
 export async function signupAction(formData: FormData): Promise<SignupResult> {
   const email = String(formData.get('email') ?? '').trim().toLowerCase()
-  const code = String(formData.get('classroom_code') ?? '').trim().toLowerCase()
   const fullName = String(formData.get('full_name') ?? '').trim()
   const grade = String(formData.get('grade') ?? '').trim()
   const why = String(formData.get('why_joining') ?? '').trim()
 
-  if (!email || !code || !fullName) {
-    return { ok: false, message: 'Email, name, and Classroom code are required.' }
+  if (!email || !fullName) {
+    return { ok: false, message: 'Email and name are required.' }
   }
   if (!email.includes('@')) {
     return { ok: false, message: 'That email looks invalid.' }
@@ -34,22 +25,6 @@ export async function signupAction(formData: FormData): Promise<SignupResult> {
   const supabase = await createSupabaseServerClient()
   if (!supabase) {
     return { ok: false, message: 'Sign-up is not configured yet. Try again later.' }
-  }
-
-  // Validate code (RLS allows public read of active codes)
-  const { data: codeRow, error: codeError } = await supabase
-    .from('allowed_classroom_codes')
-    .select('code')
-    .eq('code', code)
-    .eq('active', true)
-    .maybeSingle()
-
-  if (codeError) {
-    console.error('classroom code lookup failed:', codeError)
-    return { ok: false, message: 'Could not verify that Classroom code. Try again.' }
-  }
-  if (!codeRow) {
-    return { ok: false, message: 'That Classroom code is not valid. Ask an officer for the current code.' }
   }
 
   // Log the membership signup intent (RLS allows anon insert)
