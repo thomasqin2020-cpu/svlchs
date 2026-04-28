@@ -1,5 +1,6 @@
+import Link from 'next/link'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
-import { createAnnouncement, deleteAnnouncement } from './actions'
+import { createAnnouncement, updateAnnouncement, deleteAnnouncement } from './actions'
 
 interface Row {
   id: string
@@ -21,9 +22,14 @@ async function loadAnnouncements(): Promise<Row[]> {
   return (data ?? []) as Row[]
 }
 
-export default async function AnnouncementsAdmin() {
+export default async function AnnouncementsAdmin({
+  searchParams,
+}: {
+  searchParams: Promise<{ edit?: string }>
+}) {
   const rows = await loadAnnouncements()
   const today = new Date().toISOString().slice(0, 10)
+  const { edit: editId } = await searchParams
 
   return (
     <>
@@ -77,20 +83,59 @@ export default async function AnnouncementsAdmin() {
             </thead>
             <tbody>
               {rows.map((row) => (
-                <tr key={row.id}>
-                  <td><strong>{row.title}</strong><br /><span style={{ color: 'var(--fg-muted)', fontSize: 12 }}>{row.body.slice(0, 100)}{row.body.length > 100 ? '…' : ''}</span></td>
-                  <td>{row.date}</td>
-                  <td style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    {row.pinned && <span className="admin-tag gold">Pinned</span>}
-                    {row.members_only && <span className="admin-tag blue">Members</span>}
-                    {!row.published && <span className="admin-tag red">Draft</span>}
-                  </td>
-                  <td>
-                    <form action={async () => { 'use server'; await deleteAnnouncement(row.id) }}>
-                      <button type="submit" className="admin-tag red" style={{ cursor: 'pointer' }}>Delete</button>
-                    </form>
-                  </td>
-                </tr>
+                editId === row.id ? (
+                  <tr key={row.id}>
+                    <td colSpan={4}>
+                      <form action={updateAnnouncement.bind(null, row.id)} className="admin-form">
+                        <label className="auth-field">
+                          <span>Title</span>
+                          <input name="title" type="text" defaultValue={row.title} required />
+                        </label>
+                        <label className="auth-field">
+                          <span>Body</span>
+                          <textarea name="body" rows={4} defaultValue={row.body} />
+                        </label>
+                        <div className="admin-form-row">
+                          <label className="auth-field">
+                            <span>Date</span>
+                            <input name="date" type="date" defaultValue={row.date} required />
+                          </label>
+                          <div style={{ display: 'flex', gap: 16, alignItems: 'center', paddingTop: 22 }}>
+                            <label style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 13 }}>
+                              <input type="checkbox" name="pinned" defaultChecked={row.pinned} /> Pinned
+                            </label>
+                            <label style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 13 }}>
+                              <input type="checkbox" name="members_only" defaultChecked={row.members_only} /> Members only
+                            </label>
+                            <label style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 13 }}>
+                              <input type="checkbox" name="published" defaultChecked={row.published} /> Published
+                            </label>
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <button type="submit" className="pill">Save</button>
+                          <Link href="/admin/announcements" style={{ fontSize: 13, color: 'var(--fg-muted)' }}>Cancel</Link>
+                        </div>
+                      </form>
+                    </td>
+                  </tr>
+                ) : (
+                  <tr key={row.id}>
+                    <td><strong>{row.title}</strong><br /><span style={{ color: 'var(--fg-muted)', fontSize: 12 }}>{row.body.slice(0, 100)}{row.body.length > 100 ? '…' : ''}</span></td>
+                    <td>{row.date}</td>
+                    <td style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      {row.pinned && <span className="admin-tag gold">Pinned</span>}
+                      {row.members_only && <span className="admin-tag blue">Members</span>}
+                      {!row.published && <span className="admin-tag red">Draft</span>}
+                    </td>
+                    <td style={{ display: 'flex', gap: 8 }}>
+                      <Link href={`/admin/announcements?edit=${row.id}`} className="admin-tag blue" style={{ textDecoration: 'none' }}>Edit</Link>
+                      <form action={async () => { 'use server'; await deleteAnnouncement(row.id) }}>
+                        <button type="submit" className="admin-tag red" style={{ cursor: 'pointer' }}>Delete</button>
+                      </form>
+                    </td>
+                  </tr>
+                )
               ))}
             </tbody>
           </table>
