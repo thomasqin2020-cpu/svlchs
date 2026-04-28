@@ -7,9 +7,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project
 
 Website for the Spartan Vanguard math club at La Cañada High School.
-- **Live:** https://spartan-vanguard-next.vercel.app (planned move to svlchs.org)
-- **GitHub:** https://github.com/thomasqin2020-cpu/spartan-vanguard-next
-- **School year:** 2026–2027 (incoming)
+- **GitHub:** https://github.com/thomasqin2020-cpu/svlchs
+- **Live:** Vercel deployment of `svlchs` repo (planned custom domain: svlchs.org)
+- **School year:** 2026–2027
 
 ## Commands
 

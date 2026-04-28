@@ -8,7 +8,7 @@ You said you already have a Supabase account. Skip to step 2 if you have a proje
 
 1. Go to https://supabase.com/dashboard.
 2. Click **"New project"**.
-3. Name it `spartan-vanguard`. Pick a strong DB password and **save it** in a password manager.
+3. Name it `svlchs`. Pick a strong DB password and **save it** in a password manager.
 4. Region: pick the closest US region (e.g. `us-west-1`).
 5. Wait ~2 minutes for the project to provision.
 

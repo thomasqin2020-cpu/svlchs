@@ -34,6 +34,8 @@ as $$
 $$;
 
 -- Members policies (now that is_admin() exists)
+create policy "users insert own member row" on public.members
+  for insert with check (auth.uid() = id);
 create policy "members read own row" on public.members
   for select using (auth.uid() = id);
 create policy "admins read all members" on public.members
