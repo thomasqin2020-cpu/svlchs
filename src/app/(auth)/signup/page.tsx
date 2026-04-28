@@ -12,7 +12,8 @@ export default function SignupPage() {
     <div className="auth-card">
       <h1 className="auth-title">Join Spartan Vanguard.</h1>
       <p className="auth-sub">
-        Enter your school email and we&rsquo;ll send you a one-tap sign-in link.
+        Enter the Google Classroom code your officers gave you, plus your school email. We&rsquo;ll
+        email you a one-tap sign-in link.
       </p>
 
       <form
@@ -46,6 +47,10 @@ export default function SignupPage() {
             <option value="11">11</option>
             <option value="12">12</option>
           </select>
+        </label>
+        <label className="auth-field">
+          <span>Google Classroom code</span>
+          <input name="classroom_code" type="text" required autoCapitalize="off" autoCorrect="off" />
         </label>
         <label className="auth-field">
           <span>Why are you joining? (optional)</span>

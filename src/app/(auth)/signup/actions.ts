@@ -11,12 +11,13 @@ export interface SignupResult {
 
 export async function signupAction(formData: FormData): Promise<SignupResult> {
   const email = String(formData.get('email') ?? '').trim().toLowerCase()
+  const code = String(formData.get('classroom_code') ?? '').trim().toLowerCase()
   const fullName = String(formData.get('full_name') ?? '').trim()
   const grade = String(formData.get('grade') ?? '').trim()
   const why = String(formData.get('why_joining') ?? '').trim()
 
-  if (!email || !fullName) {
-    return { ok: false, message: 'Email and name are required.' }
+  if (!email || !code || !fullName) {
+    return { ok: false, message: 'Email, name, and Classroom code are required.' }
   }
   if (!email.includes('@')) {
     return { ok: false, message: 'That email looks invalid.' }
@@ -25,6 +26,21 @@ export async function signupAction(formData: FormData): Promise<SignupResult> {
   const supabase = await createSupabaseServerClient()
   if (!supabase) {
     return { ok: false, message: 'Sign-up is not configured yet. Try again later.' }
+  }
+
+  const { data: codeRow, error: codeError } = await supabase
+    .from('allowed_classroom_codes')
+    .select('code')
+    .eq('code', code)
+    .eq('active', true)
+    .maybeSingle()
+
+  if (codeError) {
+    console.error('classroom code lookup failed:', codeError)
+    return { ok: false, message: 'Could not verify that Classroom code. Try again.' }
+  }
+  if (!codeRow) {
+    return { ok: false, message: 'That Classroom code is not valid. Ask an officer for the current code.' }
   }
 
   // Log the membership signup intent (RLS allows anon insert)
