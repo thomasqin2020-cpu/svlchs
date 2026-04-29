@@ -1614,6 +1614,22 @@ body[data-scroll-dir="up"] .edge-fade-bottom { opacity: 1; }
 .home-page .marquee-band,
 .home-page .footer { position: relative; }
 
+/* Drop the opaque black backgrounds on top-level sections so the spiral
+   shows through. Tiles/cards/officer rows keep their solid backgrounds —
+   only the section bands and chrome strips become transparent. */
+.home-page .hero,
+.home-page .event-hero { background: transparent; }
+.home-page .marquee-band {
+  background: rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(6px) saturate(140%);
+  -webkit-backdrop-filter: blur(6px) saturate(140%);
+}
+.home-page .footer {
+  background: rgba(20, 20, 22, 0.55);
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+}
+
 /* ──────────────────────────────────────────────
    Top-right account chip on the marketing homepage
    ────────────────────────────────────────────── */
