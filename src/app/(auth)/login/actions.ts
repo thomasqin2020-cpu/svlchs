@@ -36,6 +36,17 @@ export async function loginAction(formData: FormData): Promise<LoginResult> {
   })
   if (error) {
     console.error('login signInWithOtp failed:', error)
+    // Supabase rate-limits OTP requests per email (~60s cooldown). When that
+    // fires, the previous request has already sent the email — surface a
+    // soft success so the user goes to their inbox instead of clicking again.
+    const status = (error as { status?: number }).status
+    const msg = (error.message || '').toLowerCase()
+    if (status === 429 || msg.includes('rate') || msg.includes('seconds')) {
+      return {
+        ok: true,
+        message: `A sign-in link was just sent to ${email}. Check your inbox (or wait a minute and retry).`,
+      }
+    }
     return { ok: false, message: 'Could not send magic link. Try again.' }
   }
 

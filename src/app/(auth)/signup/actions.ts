@@ -111,6 +111,17 @@ export async function signupAction(formData: FormData): Promise<SignupResult> {
   })
   if (otpError) {
     console.error('signInWithOtp failed:', otpError)
+    // Same rate-limit handling as the login action — Supabase will reject
+    // a second OTP request for the same email within ~60s even though the
+    // first one already sent the email.
+    const status = (otpError as { status?: number }).status
+    const msg = (otpError.message || '').toLowerCase()
+    if (status === 429 || msg.includes('rate') || msg.includes('seconds')) {
+      return {
+        ok: true,
+        message: `A sign-in link was just sent to ${email}. Check your inbox (or wait a minute and retry).`,
+      }
+    }
     return { ok: false, message: 'Could not send magic link. Try again or contact an officer.' }
   }
 
