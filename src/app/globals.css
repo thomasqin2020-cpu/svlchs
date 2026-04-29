@@ -1585,6 +1585,36 @@ body[data-scroll-dir="up"] .edge-fade-bottom { opacity: 1; }
 .donate-page .dp-footnote a { color: var(--fg-muted); text-decoration: underline; text-underline-offset: 2px; }
 
 /* ──────────────────────────────────────────────
+   Marketing homepage — spiral animated background
+   Same shader as /donate and the auth pages, scoped to .home-page so it
+   doesn't leak into other routes.
+   ────────────────────────────────────────────── */
+
+.home-page { position: relative; isolation: isolate; }
+
+.home-page .bg-anim {
+  position: fixed; inset: 0; z-index: 0;
+  pointer-events: none; overflow: hidden;
+}
+.home-page .bg-spiral-veil {
+  position: absolute; inset: 0;
+  /* Slightly heavier veil than /donate — homepage has more text-on-bg
+     than the donate card. Keeps the spiral glow visible without harming
+     legibility. */
+  background:
+    radial-gradient(ellipse 110% 90% at 50% 50%, rgba(0,0,0,0.32) 0%, rgba(0,0,0,0.62) 100%),
+    linear-gradient(180deg, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0.10) 50%, rgba(0,0,0,0.42) 100%);
+  pointer-events: none;
+}
+
+/* Lift everything else above the spiral. The bg-anim element is z:0;
+   bumping the chrome to z:1 keeps existing fixed positioning intact. */
+.home-page > *:not(.bg-anim) { z-index: 1; }
+.home-page #app,
+.home-page .marquee-band,
+.home-page .footer { position: relative; }
+
+/* ──────────────────────────────────────────────
    Top-right account chip on the marketing homepage
    ────────────────────────────────────────────── */
 

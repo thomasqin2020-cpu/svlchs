@@ -2,9 +2,17 @@
 
 import React, { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import type { Announcement, Event, Officer, SiteConfig, Member } from '@/types/content'
 import type { SectionId, SiteLayoutData } from '@/lib/site-layout'
 import { DEFAULT_LAYOUT } from '@/lib/site-layout'
+
+// Animated WebGL spiral background, lazy-loaded so Three.js only ships when
+// the page actually needs it. Same component used on /donate and the auth pages.
+const SpiralBg = dynamic(() => import('@/app/donate/spiral-bg').then((m) => m.SpiralBg), {
+  ssr: false,
+  loading: () => null,
+})
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                         */
@@ -485,7 +493,9 @@ export default function SpartanVanguard({ announcements, events, officers, confi
   /* ================================================================ */
 
   return (
-    <>
+    <div className="home-page">
+      <SpiralBg />
+
       {/* -- Scroll progress + Edge Fades -- */}
       <div className="scroll-progress" ref={scrollProgressRef} aria-hidden="true" />
       <div className="edge-fade edge-fade-top" aria-hidden="true" />
@@ -1049,6 +1059,6 @@ export default function SpartanVanguard({ announcements, events, officers, confi
           </div>
         </div>
       </footer>
-    </>
+    </div>
   )
 }
