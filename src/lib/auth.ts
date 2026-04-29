@@ -5,18 +5,27 @@ import type { Member } from '@/types/content'
 /**
  * Returns the currently signed-in member's profile row, or null.
  * Returns null if Supabase isn't configured (allows public site to render).
+ *
+ * Uses `getSession()` (cookie-only, no Supabase API call) instead of
+ * `getUser()` here on purpose. The proxy at src/proxy.ts already validates
+ * and refreshes the session on every request via `getUser()`. If page-level
+ * code also calls `getUser()`, it can race the proxy's refresh and end up
+ * rotating the refresh token a second time — the new tokens it produces
+ * never reach the browser (cookies()-set cookies don't propagate from a
+ * server component) and the next request is signed out. Reading the
+ * session from cookies here avoids that loop.
  */
 export async function getCurrentMember(): Promise<Member | null> {
   const supabase = await createSupabaseServerClient()
   if (!supabase) return null
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session?.user) return null
 
   const { data, error } = await supabase
     .from('members')
     .select('id, email, full_name, grade, school_year, role')
-    .eq('id', user.id)
+    .eq('id', session.user.id)
     .single()
 
   if (error || !data) return null

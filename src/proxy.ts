@@ -6,6 +6,10 @@ import { createServerClient } from '@supabase/ssr'
  * see fresh `auth.getUser()`. Required by @supabase/ssr.
  *
  * If env vars aren't configured yet, passes the request through unchanged.
+ *
+ * IMPORTANT contract from @supabase/ssr: don't run any code between
+ * createServerClient and supabase.auth.getUser(). Doing so can cause users
+ * to be randomly logged out.
  */
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request })
@@ -20,14 +24,22 @@ export async function proxy(request: NextRequest) {
         return request.cookies.getAll()
       },
       setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+        // Mutate the in-flight request so the rest of this proxy run sees
+        // the refreshed cookies, then rebuild the response and write the
+        // cookies onto it with their original options (path/maxAge/etc).
+        cookiesToSet.forEach(({ name, value, options }) =>
+          request.cookies.set({ name, value, ...options }),
+        )
         response = NextResponse.next({ request })
-        cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options))
+        cookiesToSet.forEach(({ name, value, options }) =>
+          response.cookies.set(name, value, options),
+        )
       },
     },
   })
 
-  // IMPORTANT: do not skip this — it's what refreshes the session.
+  // DO NOT add code between createServerClient above and getUser below — see
+  // the contract above.
   await supabase.auth.getUser()
 
   return response
