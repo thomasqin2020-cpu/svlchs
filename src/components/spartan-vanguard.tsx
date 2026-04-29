@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import type { Announcement, Event, Officer, SiteConfig } from '@/types/content'
+import type { Announcement, Event, Officer, SiteConfig, Member } from '@/types/content'
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                         */
@@ -207,13 +207,14 @@ interface SpartanVanguardProps {
   events: Event[]
   officers: Officer[]
   config: SiteConfig
+  currentMember: Member | null
 }
 
 /* ------------------------------------------------------------------ */
 /*  Component                                                         */
 /* ------------------------------------------------------------------ */
 
-export default function SpartanVanguard({ announcements, events, officers, config }: SpartanVanguardProps) {
+export default function SpartanVanguard({ announcements, events, officers, config, currentMember }: SpartanVanguardProps) {
   const [activeSection, setActiveSection] = useState('home')
   const [hoveredRoute, setHoveredRoute] = useState<string | null>(null)
   const navLinksRef = useRef<HTMLDivElement>(null)
@@ -480,6 +481,27 @@ export default function SpartanVanguard({ announcements, events, officers, confi
         <span className="crest-mini">SV</span>
         Spartan Vanguard
       </a>
+
+      {/* -- Account chip (top-right) -- */}
+      <div className="account-chip">
+        {currentMember ? (
+          <>
+            <span className="account-dot" aria-hidden />
+            <span className="account-name">
+              {currentMember.fullName?.split(' ')[0] || currentMember.email.split('@')[0]}
+            </span>
+            {currentMember.role === 'admin' && (
+              <Link href="/admin" className="account-link">Admin</Link>
+            )}
+            <Link href="/logout" className="account-link account-link-muted">Sign out</Link>
+          </>
+        ) : (
+          <>
+            <Link href="/login" className="account-link account-link-muted">Log in</Link>
+            <Link href="/signup" className="account-link account-link-cta">Sign up</Link>
+          </>
+        )}
+      </div>
 
       {/* -- Bottom Dock Navigation -- */}
       <nav className="nav">

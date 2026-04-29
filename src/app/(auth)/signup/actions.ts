@@ -2,6 +2,7 @@
 
 import { headers } from 'next/headers'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { sendEmail, notifyOfficers, membershipAckEmail, membershipNotifyEmail } from '@/lib/email'
 
 export interface SignupResult {
@@ -26,6 +27,40 @@ export async function signupAction(formData: FormData): Promise<SignupResult> {
   const supabase = await createSupabaseServerClient()
   if (!supabase) {
     return { ok: false, message: 'Sign-up is not configured yet. Try again later.' }
+  }
+
+  // Block re-signups: if this email is already a member or already has a
+  // pending/approved signup, send them to /login instead of creating a
+  // duplicate row. Uses the admin client because RLS keeps anonymous
+  // visitors from reading other people's rows.
+  const admin = createSupabaseAdminClient()
+  if (admin) {
+    const { data: existingMember } = await admin
+      .from('members')
+      .select('id')
+      .eq('email', email)
+      .maybeSingle()
+    if (existingMember) {
+      return {
+        ok: false,
+        message: 'That email is already a Spartan Vanguard member. Log in instead.',
+      }
+    }
+    const { data: existingSignup } = await admin
+      .from('membership_signups')
+      .select('id, status')
+      .eq('email', email)
+      .neq('status', 'rejected')
+      .maybeSingle()
+    if (existingSignup) {
+      return {
+        ok: false,
+        message:
+          existingSignup.status === 'approved'
+            ? 'That email is already approved. Log in to access member-only content.'
+            : 'You already have a pending sign-up. Check your inbox for the magic link.',
+      }
+    }
   }
 
   const { data: codeRow, error: codeError } = await supabase
