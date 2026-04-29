@@ -185,7 +185,6 @@ export function DonateClient() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [message, setMessage] = useState('')
-  const [anonymous, setAnonymous] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
   const formRef = useRef<HTMLFormElement>(null)
@@ -412,7 +411,6 @@ export function DonateClient() {
             <input
               name="donor_name"
               type="text"
-              placeholder="A. Lambda"
               autoComplete="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -424,7 +422,6 @@ export function DonateClient() {
               name="donor_email"
               type="email"
               required
-              placeholder="you@school.edu"
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -435,40 +432,10 @@ export function DonateClient() {
             <textarea
               name="message"
               rows={2}
-              placeholder="Cheering you on!"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
             />
           </Field>
-
-          <label
-            className={'dp-checkbox-row' + (anonymous ? ' checked' : '')}
-            onClick={(e) => {
-              if ((e.target as HTMLElement).tagName === 'INPUT') return
-              setAnonymous((v) => !v)
-            }}
-          >
-            <input
-              type="checkbox"
-              name="anonymous"
-              checked={anonymous}
-              onChange={(e) => setAnonymous(e.target.checked)}
-              style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
-            />
-            <span className="dp-box" aria-hidden>
-              <svg
-                viewBox="0 0 16 16"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2.4}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <polyline points="3,8 7,12 13,4" />
-              </svg>
-            </span>
-            <span>Show as anonymous on any future donor wall.</span>
-          </label>
 
           <button
             type="submit"
