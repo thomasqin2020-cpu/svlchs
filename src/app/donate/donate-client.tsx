@@ -189,13 +189,16 @@ export function DonateClient() {
   const [pending, startTransition] = useTransition()
   const formRef = useRef<HTMLFormElement>(null)
 
-  // Reveal observer for [data-reveal] elements.
+  // Reveal observer for [data-reveal] elements. Uses a data attribute
+  // (not a class) so the reveal state survives React re-renders that
+  // rewrite the element's className when state changes (e.g., toggling
+  // freq or focusing the custom-amount input).
   useEffect(() => {
     const els = document.querySelectorAll('[data-reveal]')
     const io = new IntersectionObserver(
       (entries) => {
         entries.forEach((e) => {
-          if (e.isIntersecting) e.target.classList.add('in')
+          if (e.isIntersecting) e.target.setAttribute('data-revealed', '')
         })
       },
       { threshold: 0.1 },
