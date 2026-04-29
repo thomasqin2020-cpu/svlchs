@@ -995,10 +995,18 @@ export default function SpartanVanguard({ announcements, events, officers, confi
           <div className="footer-cols">
             <div className="footer-col">
               <h5>Members</h5>
-              <Link href="/signup">Sign up</Link>
-              <Link href="/login">Log in</Link>
+              {currentMember ? (
+                <Link href="/logout">Sign out</Link>
+              ) : (
+                <>
+                  <Link href="/signup">Sign up</Link>
+                  <Link href="/login">Log in</Link>
+                </>
+              )}
               <Link href="/donate">Donate</Link>
-              <Link href="/admin">Admin</Link>
+              {currentMember?.role === 'admin' && (
+                <Link href="/admin">Admin</Link>
+              )}
             </div>
             <div className="footer-col">
               <h5>Compete</h5>
