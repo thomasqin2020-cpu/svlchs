@@ -407,7 +407,7 @@ export function DonateClient() {
             them. Confirm your info, then continue.
           </p>
 
-          <Field label="Your name (optional)">
+          <Field label="Your name">
             <input
               name="donor_name"
               type="text"
