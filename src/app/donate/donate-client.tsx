@@ -325,11 +325,21 @@ export function DonateClient() {
                 </span>
               </button>
             ))}
-            <div className={'dp-amt dp-amt-custom' + (customFocused ? ' active' : '')}>
+          </div>
+
+          <div
+            className={'dp-impact dp-impact-custom' + (customFocused ? ' active' : '')}
+            data-reveal
+            style={{ transitionDelay: '240ms' }}
+          >
+            <div className="dp-impact-bar" />
+            <div className="dp-impact-icon">{impact.icon}</div>
+            <div className="dp-impact-input-wrap">
+              <span className="dp-impact-prefix">$</span>
               <input
                 type="text"
                 inputMode="decimal"
-                placeholder="Other"
+                placeholder="Other amount"
                 value={custom}
                 onFocus={() => setCustomFocused(true)}
                 onBlur={() => {
@@ -342,22 +352,7 @@ export function DonateClient() {
                   if (!isNaN(n)) setAmount(n)
                 }}
               />
-            </div>
-          </div>
-
-          <div
-            className="dp-impact"
-            data-reveal
-            style={{ transitionDelay: '240ms' }}
-            key={impact.icon}
-          >
-            <div className="dp-impact-bar" />
-            <div className="dp-impact-icon">{impact.icon}</div>
-            <div className="dp-impact-text">
-              <span className="dp-muted">
-                ${amount.toFixed(0)} {freq === 'monthly' ? 'monthly' : 'today'} —{' '}
-              </span>
-              {impact.text}
+              <span className="dp-impact-freq">{freq === 'monthly' ? '/ month' : ''}</span>
             </div>
           </div>
 

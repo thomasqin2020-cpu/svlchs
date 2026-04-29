@@ -1323,7 +1323,7 @@ body[data-scroll-dir="up"] .edge-fade-bottom { opacity: 1; }
 /* Amount picker */
 .donate-page .dp-amounts {
   margin-top: 26px;
-  display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px;
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;
 }
 @media (max-width: 700px) { .donate-page .dp-amounts { grid-template-columns: repeat(3, 1fr); } }
 
@@ -1398,6 +1398,33 @@ body[data-scroll-dir="up"] .edge-fade-bottom { opacity: 1; }
 }
 .donate-page .dp-impact-text { font-size: 14px; line-height: 1.5; color: var(--fg); }
 .donate-page .dp-impact-text .dp-muted { color: var(--fg-muted); }
+
+/* Impact card variant that hosts the custom-amount input */
+.donate-page .dp-impact-custom { transition: box-shadow .25s ease, background .25s ease; }
+.donate-page .dp-impact-custom.active {
+  box-shadow: inset 0 0 0 1px rgba(176,141,58,0.55);
+  background: radial-gradient(120% 140% at 0% 50%, rgba(176,141,58,0.18) 0%, var(--bg-tile) 70%);
+}
+.donate-page .dp-impact-input-wrap {
+  flex: 1; min-width: 0;
+  display: flex; align-items: baseline; gap: 4px;
+  font-family: var(--display); font-weight: 600;
+  font-size: 22px; letter-spacing: -0.02em;
+  color: var(--fg);
+}
+.donate-page .dp-impact-prefix { color: var(--fg-muted); font-size: 18px; }
+.donate-page .dp-impact-freq { color: var(--fg-muted); font-size: 13px; font-weight: 500; }
+.donate-page .dp-impact-input-wrap input {
+  flex: 1; min-width: 0;
+  background: none; border: none; outline: none;
+  color: var(--fg);
+  font-family: var(--display); font-weight: 600;
+  font-size: 22px; letter-spacing: -0.02em;
+  padding: 2px 0;
+}
+.donate-page .dp-impact-input-wrap input::placeholder {
+  color: var(--fg-muted); font-weight: 500; font-size: 18px;
+}
 
 /* Order line items */
 .donate-page .dp-order-lines {
