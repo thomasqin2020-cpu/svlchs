@@ -41,6 +41,8 @@ function buildFragmentShader(): string {
     uniform float radiusGain;
     uniform float intensityScale;
 
+    const float TWO_PI = 6.28318530718;
+
     vec3 getColor(float t) {
         ${colorDecls}
         vec3 col = c0;
@@ -48,18 +50,38 @@ function buildFragmentShader(): string {
         return col;
     }
 
+    // The arm pattern at a given (radius, angle).
+    // Calling this twice with the natural angle and the wrapped angle
+    // (angle ± 2π) and blending between them removes the atan2 seam
+    // that otherwise runs along the −x axis.
+    float armPattern(float radius, float angle, float t, float spread, float gain, float jitter) {
+      float total = 0.0;
+      for (int i = 0; i < ${ARMS}; i++) {
+        float spiral = radius * gain + angle * spread;
+        total += 0.003 * float(i*i)
+               / abs(fract(t + float(i) * 0.02) * 5.0 - spiral + jitter);
+      }
+      return total;
+    }
+
     void main(void) {
       vec2 uv = (gl_FragCoord.xy * 2.0 - resolution.xy) / min(resolution.x, resolution.y);
       float t = time * ${SPEED.toFixed(4)};
-      float lineWidth = 0.003;
       float radius = length(uv);
       float angle = atan(uv.y, uv.x);
-      float total = 0.0;
-      for (int i = 0; i < ${ARMS}; i++) {
-        float spiral = radius * radiusGain + angle * armSpread;
-        total += lineWidth * float(i*i)
-               / abs(fract(t + float(i) * 0.02) * 5.0 - spiral + mod(uv.x + uv.y, 0.2));
-      }
+      float jitter = mod(uv.x + uv.y, 0.2);
+
+      // Sample the spiral on the natural angle branch and on the
+      // wrapped branch (angle ± 2π). They agree everywhere except near
+      // the −x seam, where one branch is the "correct" continuation of
+      // the other side. Blend with a smoothstep that ramps up only as
+      // |angle| approaches π.
+      float angleAlt = angle + (angle < 0.0 ? TWO_PI : -TWO_PI);
+      float seamW = smoothstep(2.4, 3.14159, abs(angle));
+      float pNat = armPattern(radius, angle,    t, armSpread, radiusGain, jitter);
+      float pAlt = armPattern(radius, angleAlt, t, armSpread, radiusGain, jitter);
+      float total = mix(pNat, 0.5 * (pNat + pAlt), seamW);
+
       total *= intensityScale;
       vec3 finalColor = getColor(fract(total * 0.25 + t * 0.1));
       gl_FragColor = vec4(finalColor * total, 1.0);
