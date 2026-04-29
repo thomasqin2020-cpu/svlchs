@@ -872,7 +872,9 @@ body[data-scroll-dir="up"] .edge-fade-bottom { opacity: 1; }
 }
 .section-divider.in { transform: scaleX(1); }
 
-#app { position: relative; padding-bottom: 140px; }
+/* Flex column lets us reorder top-level page-sections via CSS `order`,
+   driven by the admin Layout tab. */
+#app { position: relative; padding-bottom: 140px; display: flex; flex-direction: column; }
 
 @media (prefers-reduced-motion: reduce) {
   .reveal { opacity: 1; transform: none; filter: none; transition: none; }

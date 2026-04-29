@@ -3,6 +3,8 @@
 import React, { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import type { Announcement, Event, Officer, SiteConfig, Member } from '@/types/content'
+import type { SectionId, SiteLayoutData } from '@/lib/site-layout'
+import { DEFAULT_LAYOUT } from '@/lib/site-layout'
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                         */
@@ -207,6 +209,7 @@ interface SpartanVanguardProps {
   events: Event[]
   officers: Officer[]
   config: SiteConfig
+  layout?: SiteLayoutData
   currentMember: Member | null
 }
 
@@ -214,7 +217,19 @@ interface SpartanVanguardProps {
 /*  Component                                                         */
 /* ------------------------------------------------------------------ */
 
-export default function SpartanVanguard({ announcements, events, officers, config, currentMember }: SpartanVanguardProps) {
+export default function SpartanVanguard({ announcements, events, officers, config, layout = DEFAULT_LAYOUT, currentMember }: SpartanVanguardProps) {
+  // Index each editable section by id for easy lookup in JSX.
+  const sectionMap = new Map<SectionId, { visible: boolean; title: string; subtitle: string; order: number }>()
+  layout.sections.forEach((s, i) => {
+    sectionMap.set(s.id, { visible: s.visible, title: s.title, subtitle: s.subtitle, order: i })
+  })
+  const sectionStyle = (id: SectionId): React.CSSProperties | undefined => {
+    const s = sectionMap.get(id)
+    if (!s) return undefined
+    return { order: s.order, display: s.visible ? undefined : 'none' }
+  }
+  const sectionTitle = (id: SectionId, fallback: string) => sectionMap.get(id)?.title ?? fallback
+  const sectionSubtitle = (id: SectionId) => sectionMap.get(id)?.subtitle ?? ''
   const [activeSection, setActiveSection] = useState('home')
   const [hoveredRoute, setHoveredRoute] = useState<string | null>(null)
   const navLinksRef = useRef<HTMLDivElement>(null)
@@ -555,7 +570,7 @@ export default function SpartanVanguard({ announcements, events, officers, confi
         {/* ============================================================ */}
         {/*  HOME                                                        */}
         {/* ============================================================ */}
-        <section id="home" className="page-section">
+        <section id="home" className="page-section" style={sectionStyle('home')}>
 
           {/* Hero */}
           <section className="hero reveal" data-reveal>
@@ -689,10 +704,10 @@ export default function SpartanVanguard({ announcements, events, officers, confi
         {/* ============================================================ */}
         {/*  COMPETITIONS                                                */}
         {/* ============================================================ */}
-        <section id="competitions" className="page-section">
+        <section id="competitions" className="page-section" style={sectionStyle('competitions')}>
           <section className="hero reveal" data-reveal style={{ paddingBottom: '40px' }}>
-            <h1>Competitions.</h1>
-            <p className="hero-sub">Competitions we train for and participate in during the 2025&ndash;2026 season.</p>
+            <h1>{sectionTitle('competitions', 'Competitions.')}</h1>
+            <p className="hero-sub">{sectionSubtitle('competitions') || 'Competitions we train for and participate in during the 2025–2026 season.'}</p>
           </section>
 
           <div className="comp-list">
@@ -731,10 +746,10 @@ export default function SpartanVanguard({ announcements, events, officers, confi
         {/* ============================================================ */}
         {/*  RESOURCES                                                   */}
         {/* ============================================================ */}
-        <section id="resources" className="page-section">
+        <section id="resources" className="page-section" style={sectionStyle('resources')}>
           <section className="hero reveal" data-reveal style={{ paddingBottom: '40px' }}>
-            <h1>Resources.</h1>
-            <p className="hero-sub">Study materials, practice problems, and useful links for competition math.</p>
+            <h1>{sectionTitle('resources', 'Resources.')}</h1>
+            <p className="hero-sub">{sectionSubtitle('resources') || 'Study materials, practice problems, and useful links for competition math.'}</p>
           </section>
 
           <div className="res-wrap">
@@ -784,7 +799,7 @@ export default function SpartanVanguard({ announcements, events, officers, confi
         {/* ============================================================ */}
         {/*  VMT                                                         */}
         {/* ============================================================ */}
-        <section id="vmt" className="page-section">
+        <section id="vmt" className="page-section" style={sectionStyle('vmt')}>
           <section className="event-hero reveal" data-reveal>
             <div className="event-eyebrow">Spartan Vanguard</div>
             <h1 className="event-title">Vanguard Math Tournament</h1>
@@ -886,7 +901,7 @@ export default function SpartanVanguard({ announcements, events, officers, confi
         {/* ============================================================ */}
         {/*  ALEPH                                                       */}
         {/* ============================================================ */}
-        <section id="aleph" className="page-section">
+        <section id="aleph" className="page-section" style={sectionStyle('aleph')}>
           <section className="event-hero reveal" data-reveal>
             <div className="event-eyebrow">Spartan Vanguard</div>
             <h1 className="event-title">Aleph Competition</h1>
@@ -959,10 +974,10 @@ export default function SpartanVanguard({ announcements, events, officers, confi
         {/* ============================================================ */}
         {/*  TEAM                                                        */}
         {/* ============================================================ */}
-        <section id="team" className="page-section">
+        <section id="team" className="page-section" style={sectionStyle('team')}>
           <section className="hero reveal" data-reveal style={{ paddingBottom: '40px' }}>
-            <h1>Meet the <span className="grad">Vanguard.</span></h1>
-            <p className="hero-sub">Six officers and a network of volunteers who make Spartan Vanguard run.</p>
+            <h1>{sectionTitle('team', 'Meet the Vanguard.')}</h1>
+            <p className="hero-sub">{sectionSubtitle('team') || 'Six officers and a network of volunteers who make Spartan Vanguard run.'}</p>
           </section>
 
           <section className="officers-section">

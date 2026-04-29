@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from './supabase/server'
 import type { Announcement, Event, Officer, SiteConfig } from '@/types/content'
+import { DEFAULT_LAYOUT, normalizeLayout, type SiteLayoutData } from './site-layout'
 
 // ----------------------------------------------------------------------------
 // Hardcoded fallback data — used when Supabase env isn't set OR query errors.
@@ -155,6 +156,24 @@ export async function fetchConfig(): Promise<SiteConfig> {
   } catch (e) {
     console.error('Failed to fetch site config from Supabase:', e)
     return fallbackConfig
+  }
+}
+
+export async function fetchPublishedLayout(): Promise<SiteLayoutData> {
+  const supabase = await createSupabaseServerClient()
+  if (!supabase) return DEFAULT_LAYOUT
+  try {
+    const { data, error } = await supabase
+      .from('site_layouts')
+      .select('data')
+      .eq('status', 'published')
+      .maybeSingle()
+    if (error) throw error
+    if (!data) return DEFAULT_LAYOUT
+    return normalizeLayout(data.data)
+  } catch (e) {
+    console.error('Failed to fetch published layout:', e)
+    return DEFAULT_LAYOUT
   }
 }
 

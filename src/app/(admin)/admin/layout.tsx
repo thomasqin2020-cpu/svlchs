@@ -10,6 +10,7 @@ const NAV = [
   { href: '/admin/membership-signups', label: 'Member sign-ups' },
   { href: '/admin/competition-registrations', label: 'Comp. registrations' },
   { href: '/admin/contact-submissions', label: 'Contact inbox' },
+  { href: '/admin/site-layout', label: 'Layout' },
   { href: '/admin/site-config', label: 'Site config' },
 ]
 
