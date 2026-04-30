@@ -38,7 +38,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(callback, 307)
   }
 
-  let response = NextResponse.next({ request })
+  const response = NextResponse.next({ request })
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -50,16 +50,16 @@ export async function proxy(request: NextRequest) {
         return request.cookies.getAll()
       },
       setAll(cookiesToSet) {
-        // Mutate the in-flight request so the rest of this proxy run sees
-        // the refreshed cookies, then rebuild the response and write the
-        // cookies onto it with their original options (path/maxAge/etc).
-        cookiesToSet.forEach(({ name, value, options }) =>
-          request.cookies.set({ name, value, ...options }),
-        )
-        response = NextResponse.next({ request })
-        cookiesToSet.forEach(({ name, value, options }) =>
-          response.cookies.set(name, value, options),
-        )
+        // Write refreshed auth cookies onto the SAME response — earlier we
+        // rebuilt the response with NextResponse.next({ request }) on each
+        // setAll call, but if the SDK calls setAll twice in a single proxy
+        // run (it does for chunked tokens) the second rebuild discards the
+        // first batch's Set-Cookie headers and the browser ends up with
+        // truncated/missing cookie chunks → next request looks signed out.
+        cookiesToSet.forEach(({ name, value, options }) => {
+          request.cookies.set(name, value)
+          response.cookies.set(name, value, options)
+        })
       },
     },
   })
