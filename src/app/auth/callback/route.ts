@@ -35,9 +35,17 @@ export async function GET(request: NextRequest) {
         return request.cookies.getAll()
       },
       setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value, options }) =>
-          response.cookies.set(name, value, options),
-        )
+        // Mirror the new auth cookies onto request.cookies AND the response.
+        // Without the request mirror, the upsert() call below (which reuses
+        // this same client) re-reads getAll() and sees the pre-login cookies,
+        // decides the session is invalid, and calls _removeSession — which
+        // queues maxAge:0 cookies that overwrite the just-set ones on the
+        // response. Net effect: browser receives "logged out" cookies and
+        // the user is signed out the moment they navigate.
+        cookiesToSet.forEach(({ name, value, options }) => {
+          request.cookies.set(name, value)
+          response.cookies.set(name, value, options)
+        })
       },
     },
   })
