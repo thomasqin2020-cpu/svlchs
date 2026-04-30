@@ -26,9 +26,16 @@ export async function loginAction(formData: FormData): Promise<LoginResult> {
     return { ok: false, message: 'Login is not configured yet. Try again later.' }
   }
 
-  const host = (await headers()).get('host')
-  const protocol = host?.startsWith('localhost') ? 'http' : 'https'
-  const redirectTo = `${protocol}://${host}/auth/callback?next=${encodeURIComponent(next)}`
+  // Prefer the explicit canonical site URL so magic links don't point at a
+  // Vercel auto-alias the Supabase dashboard hasn't whitelisted.
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '')
+  let baseUrl = siteUrl
+  if (!baseUrl) {
+    const host = (await headers()).get('host')
+    const protocol = host?.startsWith('localhost') ? 'http' : 'https'
+    baseUrl = `${protocol}://${host}`
+  }
+  const redirectTo = `${baseUrl}/auth/callback?next=${encodeURIComponent(next)}`
 
   const { error } = await supabase.auth.signInWithOtp({
     email,

@@ -97,10 +97,17 @@ export async function signupAction(formData: FormData): Promise<SignupResult> {
     }).catch(() => {})
   }
 
-  // Build redirect URL for the magic link (uses the site's host).
-  const host = (await headers()).get('host')
-  const protocol = host?.startsWith('localhost') ? 'http' : 'https'
-  const redirectTo = `${protocol}://${host}/auth/callback?next=/`
+  // Build redirect URL for the magic link. Prefer the explicit canonical site
+  // URL so we don't generate links pointing at a Vercel auto-alias that the
+  // Supabase dashboard hasn't whitelisted.
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '')
+  let baseUrl = siteUrl
+  if (!baseUrl) {
+    const host = (await headers()).get('host')
+    const protocol = host?.startsWith('localhost') ? 'http' : 'https'
+    baseUrl = `${protocol}://${host}`
+  }
+  const redirectTo = `${baseUrl}/auth/callback?next=/`
 
   const { error: otpError } = await supabase.auth.signInWithOtp({
     email,
