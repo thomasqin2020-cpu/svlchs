@@ -36,8 +36,8 @@ export function ResetPasswordForm() {
           const result = await resetPasswordAction(fd)
           setMessage({ ok: result.ok, text: result.message })
           if (result.signedIn) {
-            // Hard navigation so cookies are committed before the next request.
-            window.location.assign('/')
+            // Brief delay so Set-Cookie commits before the navigation request fires.
+            setTimeout(() => window.location.assign('/'), 100)
           }
         })
       }}

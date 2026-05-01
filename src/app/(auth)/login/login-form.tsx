@@ -60,12 +60,12 @@ export function LoginForm() {
               const result = await res.json().catch(() => ({ ok: false, message: 'Unexpected response.' }))
               setMessage({ ok: !!result.ok, text: result.message ?? '' })
               if (result.signedIn) {
-                // Hard navigation so the browser commits the auth cookies
-                // before the next request fires. router.replace + refresh
-                // raced ahead of cookie commit and the server saw an
-                // anonymous request, dropping the freshly-set session.
+                // Brief setTimeout so the browser finishes committing the
+                // Set-Cookie from /api/auth/login before navigation fires;
+                // a synchronous location.assign here was racing ahead and
+                // landing on /admin/etc with no auth cookie.
                 const target = typeof result.next === 'string' && result.next.startsWith('/') ? result.next : '/'
-                window.location.assign(target)
+                setTimeout(() => window.location.assign(target), 100)
               }
             } catch (err) {
               console.error('login fetch failed:', err)

@@ -66,8 +66,10 @@ export default function SignupPage() {
               const result = await res.json().catch(() => ({ ok: false, message: 'Unexpected response.' }))
               setMessage({ ok: !!result.ok, text: result.message ?? '' })
               if (result.signedIn) {
-                // Hard navigation so cookies are committed before the next request.
-                window.location.assign('/')
+                // Tiny setTimeout so the browser commits Set-Cookie from
+                // /api/auth/signup before navigation; without it the
+                // location.assign races ahead with no auth cookie.
+                setTimeout(() => window.location.assign('/'), 100)
                 return
               }
               if (result.ok) form.reset()
