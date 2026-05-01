@@ -1,8 +1,17 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
+
+const ERROR_MESSAGES: Record<string, string> = {
+  invalid_credentials: 'Wrong email or password. If you haven’t set a password yet, use the link below.',
+  invalid_email: 'Please enter a valid email.',
+  missing_password: 'Please enter your password.',
+  rate_limited: 'Too many attempts. Wait a minute and try again.',
+  not_configured: 'Login is not configured yet.',
+  unknown: 'Could not log you in. Try again.',
+}
 
 function LockIcon() {
   return (
@@ -25,9 +34,18 @@ function LockIcon() {
 }
 
 export function LoginForm() {
-  const [pending, startTransition] = useTransition()
-  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null)
-  const next = useSearchParams().get('next') ?? '/'
+  const params = useSearchParams()
+  const next = params.get('next') ?? '/'
+  const errorParam = params.get('error')
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  // Reflect URL error into UI on first paint.
+  useEffect(() => {
+    if (errorParam && ERROR_MESSAGES[errorParam]) {
+      setError(ERROR_MESSAGES[errorParam])
+    }
+  }, [errorParam])
 
   return (
     <div className="auth-card-v2">
@@ -39,41 +57,22 @@ export function LoginForm() {
       </div>
 
       <h1 className="auth-title-v2">Welcome back.</h1>
-      <p className="auth-sub-v2">
-        Sign in with your email and password.
-      </p>
+      <p className="auth-sub-v2">Sign in with your email and password.</p>
 
+      {/* Native form POST. Browser handles the redirect + Set-Cookie chain
+          natively, which is dramatically more reliable than fetch +
+          location.assign for persisting auth cookies across the navigation
+          boundary. */}
       <form
-        onSubmit={(e) => {
-          e.preventDefault()
-          const fd = new FormData(e.currentTarget)
-          const email = String(fd.get('email') ?? '')
-          const password = String(fd.get('password') ?? '')
-          startTransition(async () => {
-            try {
-              const res = await fetch('/api/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({ email, password, next }),
-              })
-              const result = await res.json().catch(() => ({ ok: false, message: 'Unexpected response.' }))
-              setMessage({ ok: !!result.ok, text: result.message ?? '' })
-              if (result.signedIn) {
-                // Brief setTimeout so the browser finishes committing the
-                // Set-Cookie from /api/auth/login before navigation fires;
-                // a synchronous location.assign here was racing ahead and
-                // landing on /admin/etc with no auth cookie.
-                const target = typeof result.next === 'string' && result.next.startsWith('/') ? result.next : '/'
-                setTimeout(() => window.location.assign(target), 100)
-              }
-            } catch (err) {
-              console.error('login fetch failed:', err)
-              setMessage({ ok: false, text: 'Network error. Try again.' })
-            }
-          })
+        method="POST"
+        action="/api/auth/login"
+        onSubmit={() => {
+          setError(null)
+          setSubmitting(true)
         }}
       >
+        <input type="hidden" name="next" value={next} />
+
         <div className="dp-field">
           <label>Email</label>
           <div className="dp-input-wrap">
@@ -84,17 +83,12 @@ export function LoginForm() {
         <div className="dp-field">
           <label>Password</label>
           <div className="dp-input-wrap">
-            <input
-              name="password"
-              type="password"
-              required
-              autoComplete="current-password"
-            />
+            <input name="password" type="password" required autoComplete="current-password" />
           </div>
         </div>
 
-        <button type="submit" className="dp-donate-btn" disabled={pending}>
-          {pending ? (
+        <button type="submit" className="dp-donate-btn" disabled={submitting}>
+          {submitting ? (
             <>
               <span className="dp-spinner" />
               <span>Signing in…</span>
@@ -107,9 +101,7 @@ export function LoginForm() {
           )}
         </button>
 
-        {message && (
-          <p className={`auth-msg-v2 ${message.ok ? 'ok' : 'err'}`}>{message.text}</p>
-        )}
+        {error && <p className="auth-msg-v2 err">{error}</p>}
       </form>
 
       <p className="auth-foot-v2">

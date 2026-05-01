@@ -1,7 +1,19 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
+
+const ERROR_MESSAGES: Record<string, string> = {
+  missing_fields: 'Email, password, name, and Classroom code are required.',
+  invalid_email: 'That email looks invalid.',
+  short_password: 'Password must be at least 8 characters.',
+  not_configured: 'Sign-up is not configured yet.',
+  already_member: 'That email is already registered. Try logging in or use the “forgot password” link.',
+  bad_code: 'That Classroom code is not valid. Ask an officer for the current code.',
+  create_failed: 'Could not create your account. Try again.',
+  unknown: 'Something went wrong. Try again.',
+}
 
 function LockIcon() {
   return (
@@ -24,8 +36,16 @@ function LockIcon() {
 }
 
 export default function SignupPage() {
-  const [pending, startTransition] = useTransition()
-  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null)
+  const params = useSearchParams()
+  const errorParam = params.get('error')
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (errorParam && ERROR_MESSAGES[errorParam]) {
+      setError(ERROR_MESSAGES[errorParam])
+    }
+  }, [errorParam])
 
   return (
     <div className="auth-card-v2">
@@ -42,42 +62,13 @@ export default function SignupPage() {
         you&rsquo;ll remember.
       </p>
 
+      {/* Native form POST. Browser handles redirect + Set-Cookie natively. */}
       <form
-        onSubmit={(e) => {
-          e.preventDefault()
-          const form = e.currentTarget
-          const fd = new FormData(form)
-          const payload = {
-            full_name: String(fd.get('full_name') ?? ''),
-            email: String(fd.get('email') ?? ''),
-            password: String(fd.get('password') ?? ''),
-            grade: String(fd.get('grade') ?? ''),
-            classroom_code: String(fd.get('classroom_code') ?? ''),
-            why_joining: String(fd.get('why_joining') ?? ''),
-          }
-          startTransition(async () => {
-            try {
-              const res = await fetch('/api/auth/signup', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify(payload),
-              })
-              const result = await res.json().catch(() => ({ ok: false, message: 'Unexpected response.' }))
-              setMessage({ ok: !!result.ok, text: result.message ?? '' })
-              if (result.signedIn) {
-                // Tiny setTimeout so the browser commits Set-Cookie from
-                // /api/auth/signup before navigation; without it the
-                // location.assign races ahead with no auth cookie.
-                setTimeout(() => window.location.assign('/'), 100)
-                return
-              }
-              if (result.ok) form.reset()
-            } catch (err) {
-              console.error('signup fetch failed:', err)
-              setMessage({ ok: false, text: 'Network error. Try again.' })
-            }
-          })
+        method="POST"
+        action="/api/auth/signup"
+        onSubmit={() => {
+          setError(null)
+          setSubmitting(true)
         }}
       >
         <div className="dp-field">
@@ -90,25 +81,14 @@ export default function SignupPage() {
         <div className="dp-field">
           <label>School email</label>
           <div className="dp-input-wrap">
-            <input
-              name="email"
-              type="email"
-              required
-              autoComplete="email"
-            />
+            <input name="email" type="email" required autoComplete="email" />
           </div>
         </div>
 
         <div className="dp-field">
           <label>Password</label>
           <div className="dp-input-wrap">
-            <input
-              name="password"
-              type="password"
-              required
-              minLength={8}
-              autoComplete="new-password"
-            />
+            <input name="password" type="password" required minLength={8} autoComplete="new-password" />
           </div>
           <p className="auth-hint-v2">At least 8 characters.</p>
         </div>
@@ -133,13 +113,7 @@ export default function SignupPage() {
         <div className="dp-field">
           <label>Google Classroom code</label>
           <div className="dp-input-wrap">
-            <input
-              name="classroom_code"
-              type="text"
-              required
-              autoCapitalize="off"
-              autoCorrect="off"
-            />
+            <input name="classroom_code" type="text" required autoCapitalize="off" autoCorrect="off" />
           </div>
         </div>
 
@@ -150,8 +124,8 @@ export default function SignupPage() {
           </div>
         </div>
 
-        <button type="submit" className="dp-donate-btn" disabled={pending}>
-          {pending ? (
+        <button type="submit" className="dp-donate-btn" disabled={submitting}>
+          {submitting ? (
             <>
               <span className="dp-spinner" />
               <span>Creating account…</span>
@@ -164,9 +138,7 @@ export default function SignupPage() {
           )}
         </button>
 
-        {message && (
-          <p className={`auth-msg-v2 ${message.ok ? 'ok' : 'err'}`}>{message.text}</p>
-        )}
+        {error && <p className="auth-msg-v2 err">{error}</p>}
       </form>
 
       <p className="auth-foot-v2">
