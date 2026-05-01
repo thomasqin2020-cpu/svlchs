@@ -1,24 +1,27 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
 
 /**
- * Refreshes the Supabase auth session on every request so server components
- * see fresh `auth.getUser()`. Required by @supabase/ssr.
- *
- * If env vars aren't configured yet, passes the request through unchanged.
- *
- * IMPORTANT contract from @supabase/ssr: don't run any code between
- * createServerClient and supabase.auth.getUser(). Doing so can cause users
- * to be randomly logged out.
+ * Vercel auto-aliases the deployment under both the short and long forms; the
+ * Supabase dashboard's Site URL points at the long one, so magic-link redirects
+ * land there. We bounce them to the canonical short host so cookies are scoped
+ * to a single hostname (cookies on `*-projects.vercel.app` don't reach `*.vercel.app`).
  */
-// Vercel auto-aliases the deployment under both the short and long forms; the
-// Supabase dashboard's Site URL points at the long one, so magic-link redirects
-// land there. We bounce them to the canonical short host so cookies are scoped
-// to a single hostname (cookies on `*-projects.vercel.app` don't reach `*.vercel.app`).
 const LEGACY_LONG_HOST = 'svlchs-thomasqin2020-cpus-projects.vercel.app'
 const CANONICAL_HOST = 'svlchs.vercel.app'
 
-export async function proxy(request: NextRequest) {
+/**
+ * Routing-only proxy. Earlier this file ran `supabase.auth.getUser()` on every
+ * request (the canonical @supabase/ssr middleware pattern) to refresh tokens.
+ * That call routinely rewrote auth cookies even when they were still fresh, and
+ * for password sessions specifically the rewrite was deleting cookies on every
+ * page load — login persisted for one render and then evaporated.
+ *
+ * Page-level code in `src/lib/auth.ts` uses `getSession()` (cookie-only, no
+ * network) which doesn't need a proxy-level refresh, so we simply preserve the
+ * incoming cookies and let the SDK refresh tokens lazily when something
+ * actually needs an access token.
+ */
+export function proxy(request: NextRequest) {
   const reqUrl = request.nextUrl
 
   // Hostname canonicalization. Only this exact alias — preview deployments
@@ -38,37 +41,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(callback, 307)
   }
 
-  const response = NextResponse.next({ request })
-
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  if (!url || !anonKey) return response
-
-  const supabase = createServerClient(url, anonKey, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll()
-      },
-      setAll(cookiesToSet) {
-        // Write refreshed auth cookies onto the SAME response — earlier we
-        // rebuilt the response with NextResponse.next({ request }) on each
-        // setAll call, but if the SDK calls setAll twice in a single proxy
-        // run (it does for chunked tokens) the second rebuild discards the
-        // first batch's Set-Cookie headers and the browser ends up with
-        // truncated/missing cookie chunks → next request looks signed out.
-        cookiesToSet.forEach(({ name, value, options }) => {
-          request.cookies.set(name, value)
-          response.cookies.set(name, value, options)
-        })
-      },
-    },
-  })
-
-  // DO NOT add code between createServerClient above and getUser below — see
-  // the contract above.
-  await supabase.auth.getUser()
-
-  return response
+  return NextResponse.next({ request })
 }
 
 export const config = {
