@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
 import { resetPasswordAction } from './actions'
 
 function LockIcon() {
@@ -27,7 +26,6 @@ function LockIcon() {
 export function ResetPasswordForm() {
   const [pending, startTransition] = useTransition()
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null)
-  const router = useRouter()
 
   return (
     <form
@@ -38,8 +36,8 @@ export function ResetPasswordForm() {
           const result = await resetPasswordAction(fd)
           setMessage({ ok: result.ok, text: result.message })
           if (result.signedIn) {
-            router.replace('/')
-            router.refresh()
+            // Hard navigation so cookies are committed before the next request.
+            window.location.assign('/')
           }
         })
       }}

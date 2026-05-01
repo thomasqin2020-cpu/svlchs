@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 
 function LockIcon() {
   return (
@@ -27,7 +26,6 @@ function LockIcon() {
 export default function SignupPage() {
   const [pending, startTransition] = useTransition()
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null)
-  const router = useRouter()
 
   return (
     <div className="auth-card-v2">
@@ -68,8 +66,8 @@ export default function SignupPage() {
               const result = await res.json().catch(() => ({ ok: false, message: 'Unexpected response.' }))
               setMessage({ ok: !!result.ok, text: result.message ?? '' })
               if (result.signedIn) {
-                router.replace('/')
-                router.refresh()
+                // Hard navigation so cookies are committed before the next request.
+                window.location.assign('/')
                 return
               }
               if (result.ok) form.reset()

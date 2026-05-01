@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 
 function LockIcon() {
   return (
@@ -28,7 +28,6 @@ export function LoginForm() {
   const [pending, startTransition] = useTransition()
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null)
   const next = useSearchParams().get('next') ?? '/'
-  const router = useRouter()
 
   return (
     <div className="auth-card-v2">
@@ -61,8 +60,12 @@ export function LoginForm() {
               const result = await res.json().catch(() => ({ ok: false, message: 'Unexpected response.' }))
               setMessage({ ok: !!result.ok, text: result.message ?? '' })
               if (result.signedIn) {
-                router.replace(typeof result.next === 'string' ? result.next : '/')
-                router.refresh()
+                // Hard navigation so the browser commits the auth cookies
+                // before the next request fires. router.replace + refresh
+                // raced ahead of cookie commit and the server saw an
+                // anonymous request, dropping the freshly-set session.
+                const target = typeof result.next === 'string' && result.next.startsWith('/') ? result.next : '/'
+                window.location.assign(target)
               }
             } catch (err) {
               console.error('login fetch failed:', err)
