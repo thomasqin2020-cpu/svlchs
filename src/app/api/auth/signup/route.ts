@@ -122,7 +122,9 @@ export async function POST(request: NextRequest) {
       setAll(cookiesToSet) {
         cookiesToSet.forEach(({ name, value, options }) => {
           request.cookies.set(name, value)
-          response.cookies.set(name, value, options)
+          // Force Secure + HttpOnly so Chromium doesn't evict the auth cookie
+          // across navigations on HTTPS.
+          response.cookies.set(name, value, { ...options, secure: true, httpOnly: true })
         })
       },
     },

@@ -35,14 +35,12 @@ export async function POST(request: NextRequest) {
         return request.cookies.getAll()
       },
       setAll(cookiesToSet) {
-        // Mirror onto request.cookies AND response.cookies — same fix as
-        // /auth/callback (commit 6624dbc). Without the request mirror, any
-        // SDK call that re-reads cookies during this request returns the
-        // pre-login values, decides the session is invalid, and queues
-        // maxAge:0 deletions that overwrite the just-set login cookies.
         cookiesToSet.forEach(({ name, value, options }) => {
           request.cookies.set(name, value)
-          response.cookies.set(name, value, options)
+          // Force Secure + HttpOnly. Without Secure, Chromium evicts these
+          // cookies across navigations on HTTPS (the previous fix wrote them
+          // without Secure and they vanished on every page nav).
+          response.cookies.set(name, value, { ...options, secure: true, httpOnly: true })
         })
       },
     },
