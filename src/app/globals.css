@@ -1768,6 +1768,10 @@ body[data-scroll-dir="up"] .edge-fade-bottom { opacity: 1; }
 .auth-msg-v2.ok { color: var(--ok, #6ee7a4); background: rgba(110,231,164,0.10); }
 .auth-msg-v2.err { color: var(--err, #ff9f9f); background: rgba(255,159,159,0.08); }
 
+.auth-hint-v2 {
+  margin-top: 6px; font-size: 12px; color: var(--fg-muted);
+}
+
 .auth-foot-v2 {
   margin-top: 18px; text-align: center;
   font-size: 13px; color: var(--fg-muted);

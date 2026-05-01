@@ -1,6 +1,5 @@
 'use server'
 
-import { headers } from 'next/headers'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { sendEmail, notifyOfficers, membershipAckEmail, membershipNotifyEmail } from '@/lib/email'
@@ -8,58 +7,51 @@ import { sendEmail, notifyOfficers, membershipAckEmail, membershipNotifyEmail } 
 export interface SignupResult {
   ok: boolean
   message: string
+  /** True when the action created the user and signed them in. The client should
+   *  redirect to the home page on this signal so server-rendered pages pick up
+   *  the new auth cookies. */
+  signedIn?: boolean
 }
+
+const PASSWORD_MIN = 8
 
 export async function signupAction(formData: FormData): Promise<SignupResult> {
   const email = String(formData.get('email') ?? '').trim().toLowerCase()
+  const password = String(formData.get('password') ?? '')
   const code = String(formData.get('classroom_code') ?? '').trim().toLowerCase()
   const fullName = String(formData.get('full_name') ?? '').trim()
   const grade = String(formData.get('grade') ?? '').trim()
   const why = String(formData.get('why_joining') ?? '').trim()
 
-  if (!email || !code || !fullName) {
-    return { ok: false, message: 'Email, name, and Classroom code are required.' }
+  if (!email || !code || !fullName || !password) {
+    return { ok: false, message: 'Email, password, name, and Classroom code are required.' }
   }
   if (!email.includes('@')) {
     return { ok: false, message: 'That email looks invalid.' }
+  }
+  if (password.length < PASSWORD_MIN) {
+    return { ok: false, message: `Password must be at least ${PASSWORD_MIN} characters.` }
   }
 
   const supabase = await createSupabaseServerClient()
   if (!supabase) {
     return { ok: false, message: 'Sign-up is not configured yet. Try again later.' }
   }
-
-  // Block re-signups: if this email is already a member or already has a
-  // pending/approved signup, send them to /login instead of creating a
-  // duplicate row. Uses the admin client because RLS keeps anonymous
-  // visitors from reading other people's rows.
   const admin = createSupabaseAdminClient()
-  if (admin) {
-    const { data: existingMember } = await admin
-      .from('members')
-      .select('id')
-      .eq('email', email)
-      .maybeSingle()
-    if (existingMember) {
-      return {
-        ok: false,
-        message: 'That email is already a Spartan Vanguard member. Log in instead.',
-      }
-    }
-    const { data: existingSignup } = await admin
-      .from('membership_signups')
-      .select('id, status')
-      .eq('email', email)
-      .neq('status', 'rejected')
-      .maybeSingle()
-    if (existingSignup) {
-      return {
-        ok: false,
-        message:
-          existingSignup.status === 'approved'
-            ? 'That email is already approved. Log in to access member-only content.'
-            : 'You already have a pending sign-up. Check your inbox for the magic link.',
-      }
+  if (!admin) {
+    return { ok: false, message: 'Sign-up is not configured yet. Try again later.' }
+  }
+
+  // Block re-signups: if this email already has an auth user, send them to /login.
+  const { data: existingMember } = await admin
+    .from('members')
+    .select('id')
+    .eq('email', email)
+    .maybeSingle()
+  if (existingMember) {
+    return {
+      ok: false,
+      message: 'That email is already a Spartan Vanguard member. Log in instead.',
     }
   }
 
@@ -78,7 +70,7 @@ export async function signupAction(formData: FormData): Promise<SignupResult> {
     return { ok: false, message: 'That Classroom code is not valid. Ask an officer for the current code.' }
   }
 
-  // Log the membership signup intent (RLS allows anon insert)
+  // Log the membership signup intent (RLS allows anon insert).
   const { error: insertError } = await supabase.from('membership_signups').insert({
     name: fullName,
     grade: grade || null,
@@ -87,50 +79,52 @@ export async function signupAction(formData: FormData): Promise<SignupResult> {
   })
   if (insertError) {
     console.error('membership_signups insert failed:', insertError)
-    // Non-fatal — keep going to magic link.
-  } else {
-    // Fire-and-forget emails (don't block on Resend errors).
-    sendEmail({ to: email, subject: 'Welcome to Spartan Vanguard', html: membershipAckEmail(fullName) }).catch(() => {})
-    notifyOfficers({
-      subject: `New SV sign-up: ${fullName}`,
-      html: membershipNotifyEmail({ name: fullName, email, grade, why }),
-    }).catch(() => {})
+    // Non-fatal — keep going with auth.
   }
 
-  // Build redirect URL for the magic link. Prefer the explicit canonical site
-  // URL so we don't generate links pointing at a Vercel auto-alias that the
-  // Supabase dashboard hasn't whitelisted.
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '')
-  let baseUrl = siteUrl
-  if (!baseUrl) {
-    const host = (await headers()).get('host')
-    const protocol = host?.startsWith('localhost') ? 'http' : 'https'
-    baseUrl = `${protocol}://${host}`
-  }
-  const redirectTo = `${baseUrl}/auth/callback?next=/`
-
-  const { error: otpError } = await supabase.auth.signInWithOtp({
+  // Create the auth user with email_confirm: true so they don't have to click an
+  // email link before logging in. The Classroom code already gates who can sign
+  // up, so we accept the residual risk of an email typo creating an
+  // unconfirmable account.
+  const { data: created, error: createError } = await admin.auth.admin.createUser({
     email,
-    options: {
-      emailRedirectTo: redirectTo,
-      data: { full_name: fullName, grade },
-    },
+    password,
+    email_confirm: true,
+    user_metadata: { full_name: fullName, grade },
   })
-  if (otpError) {
-    console.error('signInWithOtp failed:', otpError)
-    // Same rate-limit handling as the login action — Supabase will reject
-    // a second OTP request for the same email within ~60s even though the
-    // first one already sent the email.
-    const status = (otpError as { status?: number }).status
-    const msg = (otpError.message || '').toLowerCase()
-    if (status === 429 || msg.includes('rate') || msg.includes('seconds')) {
+  if (createError || !created.user) {
+    console.error('admin.createUser failed:', createError)
+    const msg = (createError?.message || '').toLowerCase()
+    if (msg.includes('already') || msg.includes('exists')) {
       return {
-        ok: true,
-        message: `A sign-in link was just sent to ${email}. Check your inbox (or wait a minute and retry).`,
+        ok: false,
+        message: 'That email is already registered. Try logging in or use the “forgot password” link.',
       }
     }
-    return { ok: false, message: 'Could not send magic link. Try again or contact an officer.' }
+    return { ok: false, message: 'Could not create your account. Try again.' }
   }
 
-  return { ok: true, message: `Check your inbox at ${email} for a sign-in link.` }
+  // Acknowledgement + officer notification (fire-and-forget).
+  sendEmail({ to: email, subject: 'Welcome to Spartan Vanguard', html: membershipAckEmail(fullName) }).catch(() => {})
+  notifyOfficers({
+    subject: `New SV sign-up: ${fullName}`,
+    html: membershipNotifyEmail({ name: fullName, email, grade, why }),
+  }).catch(() => {})
+
+  // Sign them in immediately so the auth cookies are set on the canonical
+  // host before they ever leave the page.
+  const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+  if (signInError) {
+    console.error('post-signup signInWithPassword failed:', signInError)
+    return {
+      ok: true,
+      message: 'Account created. Please log in to continue.',
+    }
+  }
+
+  return {
+    ok: true,
+    message: 'Welcome! Redirecting…',
+    signedIn: true,
+  }
 }

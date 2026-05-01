@@ -2,8 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { loginAction } from './actions'
+import { forgotPasswordAction } from './actions'
 
 function LockIcon() {
   return (
@@ -25,38 +24,31 @@ function LockIcon() {
   )
 }
 
-export function LoginForm() {
+export default function ForgotPasswordPage() {
   const [pending, startTransition] = useTransition()
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null)
-  const next = useSearchParams().get('next') ?? '/'
-  const router = useRouter()
 
   return (
     <div className="auth-card-v2">
       <div className="dp-checkout-head">
-        <span className="dp-label">Spartan Vanguard · Log in</span>
+        <span className="dp-label">Spartan Vanguard · Reset password</span>
         <span className="dp-stripe-mark">
-          <LockIcon /> Email + password
+          <LockIcon /> Magic link
         </span>
       </div>
 
-      <h1 className="auth-title-v2">Welcome back.</h1>
+      <h1 className="auth-title-v2">Forgot your password?</h1>
       <p className="auth-sub-v2">
-        Sign in with your email and password.
+        Enter the email you signed up with and we&rsquo;ll send you a one-tap link to set a new password.
       </p>
 
       <form
         onSubmit={(e) => {
           e.preventDefault()
           const fd = new FormData(e.currentTarget)
-          fd.set('next', next)
           startTransition(async () => {
-            const result = await loginAction(fd)
+            const result = await forgotPasswordAction(fd)
             setMessage({ ok: result.ok, text: result.message })
-            if (result.signedIn) {
-              router.replace(result.next ?? '/')
-              router.refresh()
-            }
           })
         }}
       >
@@ -67,28 +59,16 @@ export function LoginForm() {
           </div>
         </div>
 
-        <div className="dp-field">
-          <label>Password</label>
-          <div className="dp-input-wrap">
-            <input
-              name="password"
-              type="password"
-              required
-              autoComplete="current-password"
-            />
-          </div>
-        </div>
-
         <button type="submit" className="dp-donate-btn" disabled={pending}>
           {pending ? (
             <>
               <span className="dp-spinner" />
-              <span>Signing in…</span>
+              <span>Sending…</span>
             </>
           ) : (
             <>
               <LockIcon />
-              <span>Sign in</span>
+              <span>Send reset link</span>
             </>
           )}
         </button>
@@ -99,10 +79,7 @@ export function LoginForm() {
       </form>
 
       <p className="auth-foot-v2">
-        <Link href="/forgot-password">Forgot password?</Link>
-      </p>
-      <p className="auth-foot-v2">
-        New here? <Link href="/signup">Sign up with a Classroom code</Link>
+        <Link href="/login">Back to log in</Link>
       </p>
     </div>
   )

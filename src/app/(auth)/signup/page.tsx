@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { signupAction } from './actions'
 
 function LockIcon() {
@@ -27,30 +28,37 @@ function LockIcon() {
 export default function SignupPage() {
   const [pending, startTransition] = useTransition()
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null)
+  const router = useRouter()
 
   return (
     <div className="auth-card-v2">
       <div className="dp-checkout-head">
         <span className="dp-label">Spartan Vanguard · Sign up</span>
         <span className="dp-stripe-mark">
-          <LockIcon /> Magic link
+          <LockIcon /> Email + password
         </span>
       </div>
 
       <h1 className="auth-title-v2">Join Spartan Vanguard.</h1>
       <p className="auth-sub-v2">
-        Enter the Google Classroom code your officers gave you, plus your school email. We&rsquo;ll
-        email you a one-tap sign-in link.
+        Enter the Google Classroom code your officers gave you, plus a school email and a password
+        you&rsquo;ll remember.
       </p>
 
       <form
         onSubmit={(e) => {
           e.preventDefault()
-          const fd = new FormData(e.currentTarget)
+          const form = e.currentTarget
+          const fd = new FormData(form)
           startTransition(async () => {
             const result = await signupAction(fd)
             setMessage({ ok: result.ok, text: result.message })
-            if (result.ok) e.currentTarget?.reset?.()
+            if (result.signedIn) {
+              router.replace('/')
+              router.refresh()
+              return
+            }
+            if (result.ok) form.reset()
           })
         }}
       >
@@ -71,6 +79,20 @@ export default function SignupPage() {
               autoComplete="email"
             />
           </div>
+        </div>
+
+        <div className="dp-field">
+          <label>Password</label>
+          <div className="dp-input-wrap">
+            <input
+              name="password"
+              type="password"
+              required
+              minLength={8}
+              autoComplete="new-password"
+            />
+          </div>
+          <p className="auth-hint-v2">At least 8 characters.</p>
         </div>
 
         <div className="dp-field">
@@ -114,12 +136,12 @@ export default function SignupPage() {
           {pending ? (
             <>
               <span className="dp-spinner" />
-              <span>Sending…</span>
+              <span>Creating account…</span>
             </>
           ) : (
             <>
               <LockIcon />
-              <span>Send me a sign-in link</span>
+              <span>Create account</span>
             </>
           )}
         </button>
