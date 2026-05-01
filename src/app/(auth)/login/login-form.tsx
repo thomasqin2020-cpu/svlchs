@@ -3,7 +3,6 @@
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { loginAction } from './actions'
 
 function LockIcon() {
   return (
@@ -49,13 +48,25 @@ export function LoginForm() {
         onSubmit={(e) => {
           e.preventDefault()
           const fd = new FormData(e.currentTarget)
-          fd.set('next', next)
+          const email = String(fd.get('email') ?? '')
+          const password = String(fd.get('password') ?? '')
           startTransition(async () => {
-            const result = await loginAction(fd)
-            setMessage({ ok: result.ok, text: result.message })
-            if (result.signedIn) {
-              router.replace(result.next ?? '/')
-              router.refresh()
+            try {
+              const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ email, password, next }),
+              })
+              const result = await res.json().catch(() => ({ ok: false, message: 'Unexpected response.' }))
+              setMessage({ ok: !!result.ok, text: result.message ?? '' })
+              if (result.signedIn) {
+                router.replace(typeof result.next === 'string' ? result.next : '/')
+                router.refresh()
+              }
+            } catch (err) {
+              console.error('login fetch failed:', err)
+              setMessage({ ok: false, text: 'Network error. Try again.' })
             }
           })
         }}

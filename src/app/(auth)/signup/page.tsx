@@ -3,7 +3,6 @@
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { signupAction } from './actions'
 
 function LockIcon() {
   return (
@@ -50,15 +49,34 @@ export default function SignupPage() {
           e.preventDefault()
           const form = e.currentTarget
           const fd = new FormData(form)
+          const payload = {
+            full_name: String(fd.get('full_name') ?? ''),
+            email: String(fd.get('email') ?? ''),
+            password: String(fd.get('password') ?? ''),
+            grade: String(fd.get('grade') ?? ''),
+            classroom_code: String(fd.get('classroom_code') ?? ''),
+            why_joining: String(fd.get('why_joining') ?? ''),
+          }
           startTransition(async () => {
-            const result = await signupAction(fd)
-            setMessage({ ok: result.ok, text: result.message })
-            if (result.signedIn) {
-              router.replace('/')
-              router.refresh()
-              return
+            try {
+              const res = await fetch('/api/auth/signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(payload),
+              })
+              const result = await res.json().catch(() => ({ ok: false, message: 'Unexpected response.' }))
+              setMessage({ ok: !!result.ok, text: result.message ?? '' })
+              if (result.signedIn) {
+                router.replace('/')
+                router.refresh()
+                return
+              }
+              if (result.ok) form.reset()
+            } catch (err) {
+              console.error('signup fetch failed:', err)
+              setMessage({ ok: false, text: 'Network error. Try again.' })
             }
-            if (result.ok) form.reset()
           })
         }}
       >
