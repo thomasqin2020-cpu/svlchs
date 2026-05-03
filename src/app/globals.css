@@ -1614,6 +1614,15 @@ body[data-scroll-dir="up"] .edge-fade-bottom { opacity: 1; }
 .home-page .marquee-band,
 .home-page .footer { position: relative; }
 
+/* Fixed chrome (account chip, brand bar, dock nav) needs to sit ABOVE
+   #app inside the home-page stacking context. The blanket z:1 rule
+   above flattens them to z:1, where #app — also z:1 but later in DOM
+   order — paints on top and steals clicks. Restore their original
+   z-indices so links stay clickable. */
+.home-page > .account-chip { z-index: 49; }
+.home-page > .brand-bar    { z-index: 49; }
+.home-page > .nav          { z-index: 50; }
+
 /* Drop the opaque black backgrounds on top-level sections so the spiral
    shows through. Tiles/cards/officer rows keep their solid backgrounds —
    only the section bands and chrome strips become transparent. */
