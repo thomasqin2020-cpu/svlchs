@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useRef, useState, useTransition } from 'react'
+import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
-import { startCheckout } from './actions'
+import Link from 'next/link'
+import { CardCheckout } from './card-checkout'
 
 const SpiralBg = dynamic(() => import('./spiral-bg').then((m) => m.SpiralBg), {
   ssr: false,
@@ -186,8 +187,8 @@ export function DonateClient() {
   const [email, setEmail] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const [pending, startTransition] = useTransition()
-  const formRef = useRef<HTMLFormElement>(null)
+  const [status, setStatus] = useState<'idle' | 'processing' | 'success'>('idle')
+  const [anonymous] = useState(false)
 
   // Reveal observer for [data-reveal] elements. Uses a data attribute
   // (not a class) so the reveal state survives React re-renders that
@@ -223,30 +224,6 @@ export function DonateClient() {
   const impact = pickImpact(amount || 0)
   const presets: number[] = [...PRESETS]
 
-  const submit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setError(null)
-    if (!amount || amount < 1) {
-      setError('Pick or enter an amount of $1 or more.')
-      return
-    }
-    if (!email) {
-      setError('Email is required so Stripe can send you a receipt.')
-      return
-    }
-    const fd = new FormData(e.currentTarget)
-    fd.set('amount_cents', String(Math.round(amount * 100)))
-    fd.set('freq', freq)
-    startTransition(async () => {
-      const result = await startCheckout(fd)
-      if (!result.ok) {
-        setError(result.message)
-        return
-      }
-      if (result.url) window.location.href = result.url
-    })
-  }
-
   return (
     <div className="donate-page">
       <SpiralBg />
@@ -256,9 +233,9 @@ export function DonateClient() {
         <span className="dp-brand-mark">
           <LambdaMark size={18} color="#F8FBF8" sharp />
         </span>
-        <a href="/" style={{ color: 'inherit' }}>
+        <Link href="/" style={{ color: 'inherit' }}>
           Spartan Vanguard
-        </a>
+        </Link>
         <span className="dp-est">EST · 2019</span>
       </div>
 
@@ -385,14 +362,8 @@ export function DonateClient() {
           </div>
         </div>
 
-        {/* ── Right column: checkout details ───────────────── */}
-        <form
-          ref={formRef}
-          className="dp-checkout"
-          onSubmit={submit}
-          data-reveal
-          style={{ transitionDelay: '120ms' }}
-        >
+        {/* ── Right column: checkout (donor info + in-page card form) ── */}
+        <div className="dp-checkout" data-reveal style={{ transitionDelay: '120ms' }}>
           <div className="dp-checkout-head">
             <span className="dp-label">Your details.</span>
             <span className="dp-stripe-mark">
@@ -401,8 +372,8 @@ export function DonateClient() {
           </div>
 
           <p className="dp-checkout-intro">
-            Card details are entered on Stripe&rsquo;s secure checkout. We never see or store
-            them. Confirm your info, then continue.
+            Enter your card directly on this page — Stripe Elements keeps your card details
+            in a PCI-compliant iframe so we never see or store them.
           </p>
 
           <Field label="Your name">
@@ -435,34 +406,27 @@ export function DonateClient() {
             />
           </Field>
 
-          <button
-            type="submit"
-            className={'dp-donate-btn' + (pending ? ' processing' : '')}
-            disabled={pending}
-          >
-            {pending ? (
-              <>
-                <span className="dp-spinner" />
-                <span>Redirecting to Stripe…</span>
-              </>
-            ) : (
-              <>
-                <LockIcon />
-                <span>
-                  Continue · ${amount.toFixed(2)} {freq === 'monthly' ? '/ month' : ''}
-                </span>
-              </>
-            )}
-          </button>
+          <CardCheckout
+            amount={amount}
+            freq={freq}
+            donorName={name}
+            donorEmail={email}
+            message={message}
+            anonymous={anonymous}
+            error={error}
+            setError={setError}
+            status={status}
+            setStatus={setStatus}
+          />
 
           {error && <p className="dp-form-err">{error}</p>}
 
           <p className="dp-footnote">
-            By donating, you agree to our terms. Your payment is processed by Stripe and never
-            touches our servers. Need help?{' '}
+            By donating, you agree to our terms. Card data goes directly to Stripe via a
+            secure iframe — it never touches our servers. Need help?{' '}
             <a href="mailto:vchen26@mylcusd.net">vchen26@mylcusd.net</a>
           </p>
-        </form>
+        </div>
       </main>
     </div>
   )

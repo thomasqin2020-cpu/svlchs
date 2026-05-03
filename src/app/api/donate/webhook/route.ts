@@ -34,32 +34,78 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'invalid signature' }, { status: 400 })
   }
 
-  if (event.type !== 'checkout.session.completed') {
-    return NextResponse.json({ received: true })
-  }
-
-  const session = event.data.object as Stripe.Checkout.Session
+  // Handle two event types:
+  //   - checkout.session.completed   → from the legacy Stripe Checkout redirect
+  //   - payment_intent.succeeded     → from the in-page Stripe Elements card form
+  // Both write the same shape into `donations`. The dual handler lets us keep
+  // the redirect flow as a fallback (e.g., for monthly subscriptions, which
+  // still go through Checkout) while the new card UI handles one-time charges.
   const supabase = createSupabaseAdminClient()
   if (!supabase) {
     console.error('webhook: SUPABASE_SERVICE_ROLE_KEY missing')
     return NextResponse.json({ error: 'supabase admin not configured' }, { status: 500 })
   }
 
-  const meta = session.metadata ?? {}
+  let donationRow:
+    | {
+        stripe_checkout_session_id: string | null
+        stripe_payment_intent_id: string | null
+        amount_cents: number
+        currency: string
+        donor_name: string | null
+        donor_email: string | null
+        anonymous: boolean
+        message: string | null
+      }
+    | null = null
+  let conflictKey: 'stripe_checkout_session_id' | 'stripe_payment_intent_id' = 'stripe_checkout_session_id'
+  let donorEmail: string | null = null
+  let donorName: string | null = null
+  let amountCents = 0
 
-  const { error } = await supabase.from('donations').upsert(
-    {
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object as Stripe.Checkout.Session
+    const meta = session.metadata ?? {}
+    donationRow = {
       stripe_checkout_session_id: session.id,
-      stripe_payment_intent_id: typeof session.payment_intent === 'string' ? session.payment_intent : null,
+      stripe_payment_intent_id:
+        typeof session.payment_intent === 'string' ? session.payment_intent : null,
       amount_cents: session.amount_total ?? 0,
       currency: session.currency ?? 'usd',
       donor_name: meta.donor_name || session.customer_details?.name || null,
       donor_email: meta.donor_email || session.customer_details?.email || null,
       anonymous: meta.anonymous === 'true',
       message: meta.message || null,
-    },
-    { onConflict: 'stripe_checkout_session_id' }
-  )
+    }
+    conflictKey = 'stripe_checkout_session_id'
+    donorEmail = donationRow.donor_email
+    donorName = donationRow.donor_name
+    amountCents = donationRow.amount_cents
+  } else if (event.type === 'payment_intent.succeeded') {
+    const intent = event.data.object as Stripe.PaymentIntent
+    const meta = intent.metadata ?? {}
+    donationRow = {
+      stripe_checkout_session_id: null,
+      stripe_payment_intent_id: intent.id,
+      amount_cents: intent.amount_received ?? intent.amount ?? 0,
+      currency: intent.currency ?? 'usd',
+      donor_name: meta.donor_name || null,
+      donor_email: meta.donor_email || intent.receipt_email || null,
+      anonymous: meta.anonymous === 'true',
+      message: meta.message || null,
+    }
+    conflictKey = 'stripe_payment_intent_id'
+    donorEmail = donationRow.donor_email
+    donorName = donationRow.donor_name
+    amountCents = donationRow.amount_cents
+  } else {
+    // Other events we don't care about (yet) — ack so Stripe doesn't retry.
+    return NextResponse.json({ received: true })
+  }
+
+  const { error } = await supabase
+    .from('donations')
+    .upsert(donationRow, { onConflict: conflictKey })
 
   if (error) {
     console.error('webhook: failed to upsert donation:', error)
@@ -67,13 +113,11 @@ export async function POST(request: NextRequest) {
   }
 
   // Fire a personal thank-you email (Stripe also sends an automatic receipt).
-  const donorEmail = (meta.donor_email as string | undefined) || session.customer_details?.email || null
-  const donorName = (meta.donor_name as string | undefined) || session.customer_details?.name || null
   if (donorEmail) {
     sendEmail({
       to: donorEmail,
       subject: 'Thank you for supporting Spartan Vanguard',
-      html: donationThanksEmail({ donorName, amountCents: session.amount_total ?? 0 }),
+      html: donationThanksEmail({ donorName, amountCents }),
     }).catch(() => {})
   }
 
