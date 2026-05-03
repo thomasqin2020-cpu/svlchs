@@ -6,7 +6,7 @@ import { Resend } from 'resend'
  *
  * Required env:
  *   RESEND_API_KEY
- *   RESEND_FROM_EMAIL          (e.g. "Spartan Vanguard <hello@svlchs.org>")
+ *   RESEND_FROM_EMAIL          (e.g. "Spartan Vanguard <hello@svlchs.com>")
  *   OFFICER_NOTIFICATION_EMAIL (where officer alerts go)
  */
 let _resend: Resend | null = null

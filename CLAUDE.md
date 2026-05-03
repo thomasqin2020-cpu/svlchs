@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Website for the Spartan Vanguard math club at La Cañada High School.
 - **GitHub:** https://github.com/thomasqin2020-cpu/svlchs
-- **Live:** Vercel deployment of `svlchs` repo (planned custom domain: svlchs.org)
+- **Live:** Vercel deployment of `svlchs` repo (planned custom domain: svlchs.com)
 - **School year:** 2026–2027
 
 ## Commands
@@ -163,8 +163,8 @@ STRIPE_WEBHOOK_SECRET=
 
 # Resend
 RESEND_API_KEY=
-RESEND_FROM_EMAIL="Spartan Vanguard <hello@svlchs.org>"
-OFFICER_NOTIFICATION_EMAIL=officers@svlchs.org
+RESEND_FROM_EMAIL="Spartan Vanguard <hello@svlchs.com>"
+OFFICER_NOTIFICATION_EMAIL=officers@svlchs.com
 
 # Site
 NEXT_PUBLIC_SITE_URL=http://localhost:3000   # or production URL

@@ -55,11 +55,11 @@ SUPABASE_SERVICE_ROLE_KEY=eyJ...
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 
 # Officer notification email (where form submissions get forwarded)
-OFFICER_NOTIFICATION_EMAIL=officers@svlchs.org
+OFFICER_NOTIFICATION_EMAIL=officers@svlchs.com
 
 # Resend (see below)
 RESEND_API_KEY=re_...
-RESEND_FROM_EMAIL=Spartan Vanguard <hello@svlchs.org>
+RESEND_FROM_EMAIL=Spartan Vanguard <hello@svlchs.com>
 ```
 
 Then in **Vercel → Settings → Environment Variables**, add the same set — but flip `NEXT_PUBLIC_SITE_URL` to your production domain.
@@ -71,7 +71,7 @@ Settings → Authentication → URL Configuration.
 Add to "Redirect URLs":
 - `http://localhost:3000/auth/callback`
 - `https://YOUR-VERCEL-DOMAIN/auth/callback`
-- (later) `https://svlchs.org/auth/callback`
+- (later) `https://svlchs.com/auth/callback`
 
 Set "Site URL" to your production domain.
 
@@ -90,7 +90,7 @@ Refresh the site — you'll now see `/admin` working. Repeat for any other offic
 ## 8. Email setup (Resend)
 
 1. Sign up at https://resend.com (free tier covers ~100 emails/day).
-2. **Domains** → **Add domain** → enter `svlchs.org` (or whichever domain you'll use).
+2. **Domains** → **Add domain** → enter `svlchs.com` (or whichever domain you'll use).
 3. Add the DNS records Resend gives you (SPF, DKIM, DMARC) at your domain registrar. Verification usually takes 10–60 minutes.
 4. Until verification finishes, you can use the sandbox `onboarding@resend.dev` from-address — but Resend will only deliver emails to the email you signed up with.
 5. Get an API key from **API Keys**, paste into env as `RESEND_API_KEY`.

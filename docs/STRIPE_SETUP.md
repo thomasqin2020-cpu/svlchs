@@ -5,7 +5,7 @@ This guide covers creating a Stripe account, putting it in test mode, hooking it
 ## 1. Create a Stripe account
 
 1. Go to https://dashboard.stripe.com/register
-2. Sign up with the **club's email address** (e.g. `treasurer@svlchs.org` or whatever the officers share). Avoid using a personal email — accounts are hard to transfer when officers graduate.
+2. Sign up with the **club's email address** (e.g. `treasurer@svlchs.com` or whatever the officers share). Avoid using a personal email — accounts are hard to transfer when officers graduate.
 3. When asked for a business name, use **"Spartan Vanguard – La Cañada High School Math Club"** or similar. For business type, "Nonprofit / Club" works.
 4. You DO NOT need to activate the account to test. Stripe gives you full access to **Test mode** immediately.
 
