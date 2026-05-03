@@ -104,6 +104,23 @@ export async function signupAction(formData: FormData): Promise<SignupResult> {
     return { ok: false, message: 'Could not create your account. Try again.' }
   }
 
+  // Mirror the auth user into public.members so getCurrentMember() returns a
+  // profile and the homepage account chip renders. Without this row, the user
+  // is signed in but every server-side `members` lookup returns null.
+  const { error: memberInsertError } = await admin.from('members').upsert(
+    {
+      id: created.user.id,
+      email,
+      full_name: fullName,
+      grade: grade || null,
+      role: 'member',
+    },
+    { onConflict: 'id' },
+  )
+  if (memberInsertError) {
+    console.error('members upsert failed:', memberInsertError)
+  }
+
   // Acknowledgement + officer notification (fire-and-forget).
   sendEmail({ to: email, subject: 'Welcome to Spartan Vanguard', html: membershipAckEmail(fullName) }).catch(() => {})
   notifyOfficers({
