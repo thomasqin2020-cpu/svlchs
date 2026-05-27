@@ -239,20 +239,49 @@ export function DonateClient() {
         <span className="dp-est">EST · 2019</span>
       </div>
 
-      <main className="dp-page">
+      {/* ── GoFundMe hero (primary donation path) ───────────── */}
+      <section className="dp-gfm-hero" data-reveal>
+        <div className="dp-gfm-card">
+          <span className="dp-gfm-eyebrow">Spartan Vanguard · Donate</span>
+          <h1 className="dp-gfm-title">Support the math club.</h1>
+          <p className="dp-gfm-sub">
+            Our easiest way to give. Donations fund testing materials, pizza for Friday
+            meetings, competition fees, and travel for our team. La Cañada High School is a
+            public school — gifts may be tax-deductible.
+          </p>
+          <a
+            className="dp-gfm-btn"
+            href="https://gofund.me/70f62d73d"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span className="dp-gfm-btn-label">Donate via GoFundMe</span>
+            <span className="dp-gfm-btn-meta">Opens GoFundMe in a new tab ↗</span>
+          </a>
+          <p className="dp-gfm-alt">
+            Prefer to donate directly by card? <a href="#dp-card">Scroll down ↓</a>
+          </p>
+        </div>
+      </section>
+
+      <div className="dp-section-divider" data-reveal>
+        <span>Or donate by card</span>
+      </div>
+
+      <main className="dp-page" id="dp-card">
         {/* ── Left column: order summary ───────────────────── */}
         <div className="dp-order">
           <Constellation />
 
           <div data-reveal>
-            <span className="dp-eyebrow">Spartan Vanguard · Donate</span>
+            <span className="dp-eyebrow">Card checkout</span>
           </div>
           <div data-reveal style={{ transitionDelay: '60ms' }}>
-            <StaggerHeading words={['Support the', 'math club.']} gradLine={1} />
+            <StaggerHeading words={['Donate by', 'card.']} gradLine={1} />
             <p className="dp-section-sub">
-              Donations cover testing materials, pizza, competition fees, and travel. La Cañada
-              High School is a public school — gifts may be tax-deductible. We&rsquo;ll email a
-              receipt.
+              Pay directly with Visa, Mastercard, Amex, or Discover. Card details go straight
+              to Stripe through a secure iframe and never touch our servers — we&rsquo;ll email
+              you a receipt.
             </p>
           </div>
 

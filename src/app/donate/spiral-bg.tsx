@@ -96,9 +96,6 @@ export function SpiralBg() {
     const container = containerRef.current
     if (!container) return
 
-    // Honor reduced motion: render a single static frame, no RAF loop.
-    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-
     let renderer: THREE.WebGLRenderer
     try {
       renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' })
@@ -147,13 +144,7 @@ export function SpiralBg() {
       uniforms.time.value += dt
       renderer.render(scene, camera)
     }
-    if (reduceMotion) {
-      // One-shot render so the page still has the spiral imagery, just frozen.
-      uniforms.time.value = 8
-      renderer.render(scene, camera)
-    } else {
-      raf = requestAnimationFrame(animate)
-    }
+    raf = requestAnimationFrame(animate)
 
     return () => {
       cancelAnimationFrame(raf)
