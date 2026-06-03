@@ -48,7 +48,9 @@ next-env.d.ts
 /.claude/worktrees/
 /.claude/settings.local.json
 /.claude/skills/
+/.claude/hooks/
 /.agents/
+skills-lock.json
 
 # local debug / investigation artifacts
 /.playwright-mcp/
