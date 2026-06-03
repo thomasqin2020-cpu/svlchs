@@ -2,6 +2,7 @@
 
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { sendEmail, notifyOfficers, contactAckEmail, contactNotifyEmail } from '@/lib/email'
+import { isValidEmail } from '@/lib/validation'
 
 export interface ContactResult {
   ok: boolean
@@ -16,7 +17,7 @@ export async function submitContact(formData: FormData): Promise<ContactResult> 
   if (!name || !email || !message) {
     return { ok: false, message: 'Please fill in name, email, and a message.' }
   }
-  if (!email.includes('@')) {
+  if (!isValidEmail(email)) {
     return { ok: false, message: 'That email looks invalid.' }
   }
 

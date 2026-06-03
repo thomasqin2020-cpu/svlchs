@@ -1,5 +1,6 @@
 import { requireAdmin } from '@/lib/auth'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { csvRow } from '@/lib/csv'
 
 export async function GET(request: Request) {
   await requireAdmin()
@@ -17,7 +18,9 @@ export async function GET(request: Request) {
   const header = ['date', 'event', 'student', 'school', 'grade', 'email', 'parent_email', 'notes']
   const lines = [header.join(',')]
   for (const row of data ?? []) {
-    const cells = [
+    // csvRow neutralizes formula injection (cells come from the public,
+    // unauthenticated registration form) and escapes embedded quotes.
+    lines.push(csvRow([
       row.created_at,
       row.event_name ?? '',
       row.student_name ?? '',
@@ -25,9 +28,8 @@ export async function GET(request: Request) {
       row.grade ?? '',
       row.email ?? '',
       row.parent_email ?? '',
-      (row.notes ?? '').replaceAll('"', '""'),
-    ].map((c) => `"${String(c)}"`)
-    lines.push(cells.join(','))
+      row.notes ?? '',
+    ]))
   }
 
   return new Response(lines.join('\n'), {

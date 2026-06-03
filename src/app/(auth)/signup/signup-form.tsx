@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 
@@ -39,13 +39,11 @@ export function SignupForm() {
   const params = useSearchParams()
   const errorParam = params.get('error')
   const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (errorParam && ERROR_MESSAGES[errorParam]) {
-      setError(ERROR_MESSAGES[errorParam])
-    }
-  }, [errorParam])
+  // Derive the error banner from the URL on first render — no effect needed,
+  // which also avoids the set-state-in-effect render cascade.
+  const [error, setError] = useState<string | null>(
+    errorParam ? ERROR_MESSAGES[errorParam] ?? null : null,
+  )
 
   return (
     <div className="auth-card-v2">

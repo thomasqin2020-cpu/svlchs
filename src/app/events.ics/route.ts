@@ -24,6 +24,7 @@ export async function GET() {
     rows = (data ?? []) as typeof rows
   }
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
   const events: EventAttributes[] = rows.map((row) => {
     // Supabase 'date' is YYYY-MM-DD; treat as an all-day event.
     const [y, m, d] = row.date.split('-').map(Number)
@@ -33,7 +34,11 @@ export async function GET() {
       location: row.location ?? '',
       start: [y, m, d],
       duration: { days: 1 },
-      url: process.env.NEXT_PUBLIC_SITE_URL ?? '',
+      // Only set `url` when a real absolute URL exists. The ics schema
+      // validates `url` against a URL regex and REJECTS an empty string,
+      // which would 500 the entire feed whenever NEXT_PUBLIC_SITE_URL is unset
+      // (the partial-config the app otherwise degrades through gracefully).
+      ...(siteUrl ? { url: siteUrl } : {}),
       productId: 'spartan-vanguard',
     } satisfies EventAttributes
   })

@@ -19,7 +19,17 @@ function getResend(): Resend | null {
 }
 
 const FROM = process.env.RESEND_FROM_EMAIL ?? 'Spartan Vanguard <onboarding@resend.dev>'
-const OFFICERS = process.env.OFFICER_NOTIFICATION_EMAIL ?? ''
+// Resend's `to` accepts a single address or a string[] — it does NOT split a
+// single comma-joined string, so a multi-recipient OFFICER_NOTIFICATION_EMAIL
+// must be parsed into an array or every officer notification silently fails
+// validation (the error is swallowed by sendEmail + caller .catch()).
+const OFFICERS = (process.env.OFFICER_NOTIFICATION_EMAIL ?? '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean)
+// Always build ABSOLUTE links in emails — mail clients have no base document
+// URL, so a root-relative href is dead. Fall back to the production origin.
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://svlchs.org'
 
 interface SendArgs {
   to: string | string[]
@@ -54,7 +64,7 @@ export async function sendEmail(args: SendArgs): Promise<boolean> {
 }
 
 export function notifyOfficers(args: Omit<SendArgs, 'to'>): Promise<boolean> {
-  if (!OFFICERS) {
+  if (OFFICERS.length === 0) {
     console.warn('[email] OFFICER_NOTIFICATION_EMAIL not set — skipping officer notify')
     return Promise.resolve(false)
   }
@@ -109,7 +119,7 @@ export function membershipNotifyEmail(args: { name: string; email: string; grade
     </ul>
     <p><strong>Why joining:</strong></p>
     <p style="white-space:pre-wrap;">${escapeHtml(args.why || '—')}</p>
-    <p>Approve or reject in <a href="${escapeHtml(process.env.NEXT_PUBLIC_SITE_URL ?? '')}/admin/membership-signups">the admin dashboard</a>.</p>
+    <p>Approve or reject in <a href="${SITE_URL}/admin/membership-signups">the admin dashboard</a>.</p>
   `)
 }
 
@@ -154,7 +164,7 @@ export function contactNotifyEmail(args: { name: string; email: string; message:
 export function welcomeApprovedEmail(name: string): string {
   return emailLayout(`
     <p>Welcome, ${escapeHtml(name)} —</p>
-    <p>You're now an approved Spartan Vanguard member. You can sign in at any time at <a href="${escapeHtml(process.env.NEXT_PUBLIC_SITE_URL ?? '')}/login">/login</a> using a one-tap email link to see member-only announcements.</p>
+    <p>You're now an approved Spartan Vanguard member. You can sign in at any time at <a href="${SITE_URL}/login">/login</a> using a one-tap email link to see member-only announcements.</p>
     <p>Meeting times are on the homepage. See you there.</p>
     <p>— SV officers</p>
   `)

@@ -358,7 +358,10 @@ export function DonateClient() {
                   const v = e.target.value.replace(/[^0-9.]/g, '')
                   setCustom(v)
                   const n = parseFloat(v)
-                  if (!isNaN(n)) setAmount(n)
+                  // Always sync amount — including to 0 when the field is
+                  // cleared — so the summary, impact tier, and the actual
+                  // charge can't keep a stale value the input no longer shows.
+                  setAmount(Number.isFinite(n) ? n : 0)
                 }}
               />
               <span className="dp-impact-freq">{freq === 'monthly' ? '/ month' : ''}</span>

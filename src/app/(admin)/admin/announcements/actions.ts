@@ -1,9 +1,11 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { requireAdmin } from '@/lib/auth'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 
 export async function createAnnouncement(formData: FormData) {
+  await requireAdmin()
   const supabase = await createSupabaseServerClient()
   if (!supabase) throw new Error('Supabase not configured')
 
@@ -20,6 +22,7 @@ export async function createAnnouncement(formData: FormData) {
 }
 
 export async function updateAnnouncement(id: string, formData: FormData) {
+  await requireAdmin()
   const supabase = await createSupabaseServerClient()
   if (!supabase) throw new Error('Supabase not configured')
 
@@ -39,6 +42,7 @@ export async function updateAnnouncement(id: string, formData: FormData) {
 }
 
 export async function deleteAnnouncement(id: string) {
+  await requireAdmin()
   const supabase = await createSupabaseServerClient()
   if (!supabase) throw new Error('Supabase not configured')
   await supabase.from('announcements').delete().eq('id', id)

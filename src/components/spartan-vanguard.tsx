@@ -1042,13 +1042,13 @@ export default function SpartanVanguard({ announcements, events, officers, confi
             <div className="footer-col">
               <h5>Learn</h5>
               <a href="#resources" onClick={(e) => { e.preventDefault(); scrollToSection('resources') }}>Resources</a>
-              <a href="#home" onClick={(e) => { e.preventDefault(); scrollToSection('home') }}>Meeting Schedule</a>
+              <a href="#meetings" onClick={(e) => { e.preventDefault(); scrollToSection('meetings') }}>Meeting Schedule</a>
               <a href="#team" onClick={(e) => { e.preventDefault(); scrollToSection('team') }}>Officers</a>
             </div>
             <div className="footer-col">
               <h5>Contact</h5>
               <Link href="/contact">Contact form</Link>
-              <a>Remind &middot; {remindCode}</a>
+              <span>Remind &middot; {remindCode}</span>
               <a href={`mailto:${email1}`}>{email1}</a>
               <a href={`mailto:${email2}`}>{email2}</a>
             </div>

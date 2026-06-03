@@ -37,9 +37,10 @@ export async function GET(request: NextRequest) {
       setAll(cookiesToSet) {
         cookiesToSet.forEach(({ name, value, options }) => {
           request.cookies.set(name, value)
-          // Force Secure + HttpOnly — without these, Chromium evicts the auth
-          // cookies across navigations on HTTPS sites.
-          response.cookies.set(name, value, { ...options, secure: true, httpOnly: true })
+          // HttpOnly always; Secure only in production. In production (HTTPS)
+          // Secure is required so Chromium keeps the auth cookies across
+          // navigations; in dev it would drop them over plain HTTP on a LAN IP.
+          response.cookies.set(name, value, { ...options, secure: process.env.NODE_ENV === 'production', httpOnly: true })
         })
       },
     },

@@ -2048,12 +2048,14 @@ body[data-scroll-dir="up"] .edge-fade-bottom { opacity: 1; }
 }
 .home-page .bg-spiral-veil {
   position: absolute; inset: 0;
-  /* Slightly heavier veil than /donate — homepage has more text-on-bg
-     than the donate card. Keeps the spiral glow visible without harming
-     legibility. */
+  /* Light veil — just enough to keep the hero text legible while letting the
+     spiral read clearly through the transparent hero. The previous heavier
+     veil (radial 0.32→0.62, linear up to 0.42) washed the spiral down to
+     near-black, which looked like a frozen / broken animation on the
+     homepage even though the shader was rendering and animating fine. */
   background:
-    radial-gradient(ellipse 110% 90% at 50% 50%, rgba(0,0,0,0.32) 0%, rgba(0,0,0,0.62) 100%),
-    linear-gradient(180deg, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0.10) 50%, rgba(0,0,0,0.42) 100%);
+    radial-gradient(ellipse 120% 95% at 50% 42%, rgba(0,0,0,0.16) 0%, rgba(0,0,0,0.40) 100%),
+    linear-gradient(180deg, rgba(0,0,0,0.10) 0%, rgba(0,0,0,0.02) 45%, rgba(0,0,0,0.30) 100%);
   pointer-events: none;
 }
 

@@ -16,17 +16,23 @@ export async function POST(request: NextRequest) {
   let password = ''
   let next = '/'
 
+  // Only allow same-origin relative paths. A bare startsWith('/') check lets
+  // protocol-relative URLs like "//evil.com" (and "/\evil.com") through, which
+  // new URL() then resolves to a different origin — an open redirect / phishing
+  // vector on the post-login navigation.
+  const safeNext = (v: string) =>
+    v.startsWith('/') && !v.startsWith('//') && !v.startsWith('/\\') ? v : '/'
+
   if (isForm) {
     const fd = await request.formData()
     email = String(fd.get('email') ?? '').trim().toLowerCase()
     password = String(fd.get('password') ?? '')
-    const n = String(fd.get('next') ?? '/').trim()
-    next = n.startsWith('/') ? n : '/'
+    next = safeNext(String(fd.get('next') ?? '/').trim())
   } else {
     const body = await request.json().catch(() => null)
     email = String(body?.email ?? '').trim().toLowerCase()
     password = String(body?.password ?? '')
-    next = typeof body?.next === 'string' && body.next.startsWith('/') ? body.next : '/'
+    next = typeof body?.next === 'string' ? safeNext(body.next) : '/'
   }
 
   // Helper: respond with the right shape for the request type.
@@ -67,9 +73,10 @@ export async function POST(request: NextRequest) {
       setAll(cookiesToSet) {
         cookiesToSet.forEach(({ name, value, options }) => {
           request.cookies.set(name, value)
-          // Force Secure + HttpOnly so Chromium persists the auth cookie
-          // across navigations on HTTPS.
-          response.cookies.set(name, value, { ...options, secure: true, httpOnly: true })
+          // HttpOnly always; Secure only in production. Forcing Secure in dev
+          // drops the cookie over plain HTTP on non-localhost hosts (e.g.
+          // testing from a phone on a LAN IP), silently logging the user out.
+          response.cookies.set(name, value, { ...options, secure: process.env.NODE_ENV === 'production', httpOnly: true })
         })
       },
     },

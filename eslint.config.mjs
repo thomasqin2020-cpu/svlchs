@@ -7,11 +7,16 @@ const eslintConfig = defineConfig([
   ...nextTs,
   // Override default ignores of eslint-config-next.
   globalIgnores([
-    // Default ignores of eslint-config-next:
-    ".next/**",
-    "out/**",
-    "build/**",
+    // Default ignores of eslint-config-next, but globbed so NESTED build
+    // output (e.g. .claude/worktrees/*/.next) is ignored too — the
+    // root-anchored ".next/**" let ESLint lint hundreds of minified chunks
+    // inside git worktrees, drowning the real source findings.
+    "**/.next/**",
+    "**/out/**",
+    "**/build/**",
     "next-env.d.ts",
+    // Agent scratch space — worktrees, workflows, generated artifacts.
+    ".claude/**",
   ]),
 ]);
 

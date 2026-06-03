@@ -1,9 +1,11 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { requireAdmin } from '@/lib/auth'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 
 export async function createEvent(formData: FormData) {
+  await requireAdmin()
   const supabase = await createSupabaseServerClient()
   if (!supabase) throw new Error('Supabase not configured')
   await supabase.from('events').insert({
@@ -22,6 +24,7 @@ export async function createEvent(formData: FormData) {
 }
 
 export async function deleteEvent(id: string) {
+  await requireAdmin()
   const supabase = await createSupabaseServerClient()
   if (!supabase) throw new Error('Supabase not configured')
   await supabase.from('events').delete().eq('id', id)
@@ -30,6 +33,7 @@ export async function deleteEvent(id: string) {
 }
 
 export async function togglePublishEvent(id: string, published: boolean) {
+  await requireAdmin()
   const supabase = await createSupabaseServerClient()
   if (!supabase) throw new Error('Supabase not configured')
   await supabase.from('events').update({ published }).eq('id', id)

@@ -41,7 +41,10 @@ export async function forgotPasswordAction(formData: FormData): Promise<ForgotRe
     console.error('resetPasswordForEmail failed:', error)
     const status = (error as { status?: number }).status
     if (status === 429) {
-      return { ok: true, message: `If ${email} is registered, a reset link is on the way. Check your inbox.` }
+      // Rate-limited: no email was sent, so don't claim one is on the way (the
+      // user would wait for mail that never arrives). This leaks nothing about
+      // whether the account exists.
+      return { ok: false, message: 'Too many reset requests. Please wait a minute and try again.' }
     }
     // Don't leak whether the email exists; surface a generic success.
   }

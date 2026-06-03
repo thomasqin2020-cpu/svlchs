@@ -65,7 +65,9 @@ export async function fetchAnnouncements(): Promise<Announcement[]> {
   const supabase = await createSupabaseServerClient()
   if (!supabase) return []
   try {
-    // Filter to today and earlier; auto-publish/unpublish by date is enforced here.
+    // `published` is the only visibility gate — there is NO date predicate, so a
+    // future-dated announcement goes live as soon as published=true. (RLS hides
+    // members_only rows from anonymous visitors.)
     const { data, error } = await supabase
       .from('announcements')
       .select('id, title, body, date, pinned, members_only')

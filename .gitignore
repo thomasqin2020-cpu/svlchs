@@ -43,3 +43,18 @@ next-env.d.ts
 
 # local reference material (not part of the project)
 /references/
+
+# agent scratch space (git worktrees, generated workflow artifacts)
+/.claude/worktrees/
+/.claude/settings.local.json
+/.claude/skills/
+/.agents/
+
+# local debug / investigation artifacts
+/.playwright-mcp/
+spiral-*.png
+donate-spiral.png
+*-page.png
+*-register.png
+home-*.png
+home-*.jpeg

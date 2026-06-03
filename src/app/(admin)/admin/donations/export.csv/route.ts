@@ -1,5 +1,6 @@
 import { requireAdmin } from '@/lib/auth'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { csvRow } from '@/lib/csv'
 
 export async function GET() {
   await requireAdmin()
@@ -14,16 +15,17 @@ export async function GET() {
   const header = ['date', 'amount_usd', 'donor_name', 'donor_email', 'anonymous', 'message', 'stripe_pi']
   const lines = [header.join(',')]
   for (const row of data ?? []) {
-    const cells = [
+    // csvRow neutralizes formula injection (donor-controlled Stripe metadata)
+    // and escapes embedded quotes on every cell.
+    lines.push(csvRow([
       row.created_at,
       ((row.amount_cents ?? 0) / 100).toFixed(2),
       row.anonymous ? 'Anonymous' : row.donor_name ?? '',
       row.donor_email ?? '',
       row.anonymous ? 'true' : 'false',
-      (row.message ?? '').replaceAll('"', '""'),
+      row.message ?? '',
       row.stripe_payment_intent_id ?? '',
-    ].map((c) => `"${String(c)}"`)
-    lines.push(cells.join(','))
+    ]))
   }
 
   return new Response(lines.join('\n'), {

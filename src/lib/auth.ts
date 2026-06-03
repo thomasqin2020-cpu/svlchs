@@ -7,13 +7,14 @@ import type { Member } from '@/types/content'
  * Returns null if Supabase isn't configured (allows public site to render).
  *
  * Uses `getSession()` (cookie-only, no Supabase API call) instead of
- * `getUser()` here on purpose. The proxy at src/proxy.ts already validates
- * and refreshes the session on every request via `getUser()`. If page-level
- * code also calls `getUser()`, it can race the proxy's refresh and end up
- * rotating the refresh token a second time — the new tokens it produces
- * never reach the browser (cookies()-set cookies don't propagate from a
- * server component) and the next request is signed out. Reading the
- * session from cookies here avoids that loop.
+ * `getUser()` on purpose. The proxy at src/proxy.ts is routing-only and does
+ * NOT call `getUser()` (an earlier version did, and kept rotating the refresh
+ * token on every request — for password sessions that deleted the cookies and
+ * signed the user out a render later). Because getSession() only reads the
+ * cookie and does not verify it against Supabase, the real authorization
+ * backstop is the RLS-protected `members` query below: a forged/expired cookie
+ * yields no row (or an RLS denial) and getCurrentMember returns null. Do not
+ * remove that query or treat a present session cookie as proof of membership.
  */
 export async function getCurrentMember(): Promise<Member | null> {
   const supabase = await createSupabaseServerClient()

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 
@@ -11,6 +11,13 @@ const ERROR_MESSAGES: Record<string, string> = {
   rate_limited: 'Too many attempts. Wait a minute and try again.',
   not_configured: 'Login is not configured yet.',
   unknown: 'Could not log you in. Try again.',
+}
+
+// Positive notices forwarded via ?message= (e.g. the signup route redirects here
+// with message=created when auto-sign-in after signup couldn't complete).
+const MESSAGE_MESSAGES: Record<string, string> = {
+  created: 'Account created. Log in to continue.',
+  reset: 'Password updated. Log in with your new password.',
 }
 
 function LockIcon() {
@@ -37,15 +44,16 @@ export function LoginForm() {
   const params = useSearchParams()
   const next = params.get('next') ?? '/'
   const errorParam = params.get('error')
+  const messageParam = params.get('message')
   const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  // Reflect URL error into UI on first paint.
-  useEffect(() => {
-    if (errorParam && ERROR_MESSAGES[errorParam]) {
-      setError(ERROR_MESSAGES[errorParam])
-    }
-  }, [errorParam])
+  // Derive the banners from the URL on first render — no effect needed, which
+  // also avoids the set-state-in-effect render cascade.
+  const [error, setError] = useState<string | null>(
+    errorParam ? ERROR_MESSAGES[errorParam] ?? null : null,
+  )
+  const [notice, setNotice] = useState<string | null>(
+    messageParam ? MESSAGE_MESSAGES[messageParam] ?? null : null,
+  )
 
   return (
     <div className="auth-card-v2">
@@ -59,6 +67,8 @@ export function LoginForm() {
       <h1 className="auth-title-v2">Welcome back.</h1>
       <p className="auth-sub-v2">Sign in with your email and password.</p>
 
+      {notice && <p className="auth-msg-v2 ok">{notice}</p>}
+
       {/* Native form POST. Browser handles the redirect + Set-Cookie chain
           natively, which is dramatically more reliable than fetch +
           location.assign for persisting auth cookies across the navigation
@@ -68,6 +78,7 @@ export function LoginForm() {
         action="/api/auth/login"
         onSubmit={() => {
           setError(null)
+          setNotice(null)
           setSubmitting(true)
         }}
       >

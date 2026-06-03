@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { sendEmail, notifyOfficers, membershipAckEmail, membershipNotifyEmail } from '@/lib/email'
+import { isValidEmail } from '@/lib/validation'
 
 const PASSWORD_MIN = 8
 
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest) {
   if (!email || !code || !fullName || !password) {
     return fail(400, 'Email, password, name, and Classroom code are required.', 'missing_fields')
   }
-  if (!email.includes('@')) {
+  if (!isValidEmail(email)) {
     return fail(400, 'That email looks invalid.', 'invalid_email')
   }
   if (password.length < PASSWORD_MIN) {
@@ -124,6 +125,25 @@ export async function POST(request: NextRequest) {
     return fail(500, 'Could not create your account. Try again.', 'create_failed')
   }
 
+  // Create the public.members profile row. The migration does NOT auto-create
+  // it on auth.users insert, and a password signup never traverses the
+  // magic-link callback (the only other place a members row is written), so
+  // without this the brand-new account has no members row: getCurrentMember()
+  // returns null, member-only content stays hidden, requireMember/requireAdmin
+  // redirect the user as if logged out, and `update members set role='admin'`
+  // matches zero rows. The service-role admin client bypasses RLS.
+  const { error: memberError } = await admin.from('members').insert({
+    id: created.user.id,
+    email,
+    full_name: fullName,
+    grade: grade || null,
+  })
+  if (memberError) {
+    // Non-fatal (the auth user exists and we still sign them in), but loud:
+    // this is the row the rest of the app keys off, so surface it in logs.
+    console.error('failed to create members row after signup:', memberError)
+  }
+
   sendEmail({ to: email, subject: 'Welcome to Spartan Vanguard', html: membershipAckEmail(fullName) }).catch(() => {})
   notifyOfficers({
     subject: `New SV sign-up: ${fullName}`,
@@ -145,7 +165,7 @@ export async function POST(request: NextRequest) {
       setAll(cookiesToSet) {
         cookiesToSet.forEach(({ name, value, options }) => {
           request.cookies.set(name, value)
-          response.cookies.set(name, value, { ...options, secure: true, httpOnly: true })
+          response.cookies.set(name, value, { ...options, secure: process.env.NODE_ENV === 'production', httpOnly: true })
         })
       },
     },
