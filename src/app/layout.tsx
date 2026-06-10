@@ -18,8 +18,18 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Spartan Vanguard | La Cañada High School Math Club",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
+  title: {
+    default: "Spartan Vanguard | La Cañada High School Math Club",
+    template: "%s · Spartan Vanguard",
+  },
   description: "Spartan Vanguard is La Cañada High School's math club focused on extracurricular math, problem solving, and competitions.",
+  openGraph: {
+    title: "Spartan Vanguard",
+    description: "Extracurricular math, problem solving, and competitions at La Cañada High School.",
+    siteName: "Spartan Vanguard",
+    type: "website",
+  },
 };
 
 export default function RootLayout({

@@ -639,11 +639,12 @@ export default function SpartanVanguard({ announcements, events, officers, confi
             )}
 
             {/* VMT tile */}
-            <div className="tile col-6 reveal" data-reveal>
+            <div className="tile col-6 reveal" data-reveal style={{ background: 'radial-gradient(ellipse 90% 70% at 88% -12%, rgba(176,141,58,0.14), transparent 60%), var(--bg-tile)' }}>
               <div>
                 <div className="tile-eyebrow" style={{ fontFamily: 'var(--mono)' }}>{vmtDate}</div>
                 <h2 className="tile-title">Vanguard Math<br />Tournament</h2>
                 <p className="tile-desc">{vmtLocation} &middot; {vmtGrades}</p>
+                <p className="tile-desc" style={{ marginTop: '6px', fontFamily: 'var(--mono)', fontSize: '13px', letterSpacing: '0.04em', color: 'var(--fg-dim)' }}>Individual &middot; Team &middot; Relay rounds</p>
               </div>
               <div className="tile-ctas">
                 <a className="pill ghost" href={vmtSignUp} target="_blank" rel="noopener noreferrer">Sign Up</a>
@@ -655,11 +656,12 @@ export default function SpartanVanguard({ announcements, events, officers, confi
             </div>
 
             {/* Aleph tile */}
-            <div className="tile col-6 reveal" data-reveal>
+            <div className="tile col-6 reveal" data-reveal style={{ background: 'radial-gradient(ellipse 90% 70% at 88% -12%, rgba(41,151,255,0.10), transparent 60%), var(--bg-tile)' }}>
               <div>
                 <div className="tile-eyebrow" style={{ fontFamily: 'var(--mono)' }}>{alephDate}</div>
                 <h2 className="tile-title">Aleph<br />Competition</h2>
                 <p className="tile-desc">{alephLocation} &middot; {alephGrades}</p>
+                <p className="tile-desc" style={{ marginTop: '6px', fontFamily: 'var(--mono)', fontSize: '13px', letterSpacing: '0.04em', color: 'var(--fg-dim)' }}>Individual &middot; Team rounds</p>
               </div>
               <div className="tile-ctas">
                 <a className="pill ghost" href={alephSignUp} target="_blank" rel="noopener noreferrer">Sign Up</a>
@@ -717,7 +719,7 @@ export default function SpartanVanguard({ announcements, events, officers, confi
         <section id="competitions" className="page-section" style={sectionStyle('competitions')}>
           <section className="hero reveal" data-reveal style={{ paddingBottom: '40px' }}>
             <h1>{sectionTitle('competitions', 'Competitions.')}</h1>
-            <p className="hero-sub">{sectionSubtitle('competitions') || 'Competitions we train for and participate in during the 2025–2026 season.'}</p>
+            <p className="hero-sub">{sectionSubtitle('competitions') || 'Competitions we train for and participate in during the 2026–2027 season.'}</p>
           </section>
 
           <div className="comp-list">
@@ -828,9 +830,12 @@ export default function SpartanVanguard({ announcements, events, officers, confi
 
           {/* VMT Banner */}
           <section className="tiles" style={{ paddingTop: '16px' }}>
-            <div className="tile col-12 reveal" data-reveal style={{ background: 'linear-gradient(135deg,#000 0%,#1d1d1f 100%)', color: '#F8FBF8', minHeight: '320px', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-              <div style={{ maxWidth: '520px', margin: '0 auto' }}>
+            <div className="tile col-12 reveal" data-reveal style={{ background: 'radial-gradient(ellipse 75% 95% at 50% 0%, rgba(176,141,58,0.16), transparent 62%), linear-gradient(135deg,#000 0%,#1d1d1f 100%)', color: '#F8FBF8', minHeight: '320px', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+              <div style={{ maxWidth: '640px', margin: '0 auto' }}>
                 <div style={{ fontFamily: "'Inter Tight'", fontSize: 'clamp(80px,12vw,160px)', fontWeight: 700, letterSpacing: '-0.05em', lineHeight: 1 }}>VMT</div>
+                <div style={{ marginTop: '20px', fontFamily: 'var(--mono)', fontSize: '12px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(212,183,109,0.85)' }}>
+                  {vmtDate} &middot; {vmtLocation} &middot; {vmtGrades}
+                </div>
               </div>
             </div>
 
@@ -930,9 +935,12 @@ export default function SpartanVanguard({ announcements, events, officers, confi
 
           {/* Aleph Banner */}
           <section className="tiles" style={{ paddingTop: '16px' }}>
-            <div className="tile col-12 reveal" data-reveal style={{ background: 'linear-gradient(135deg,#1d1d1f 0%,#3a2e0d 100%)', color: '#F8FBF8', minHeight: '320px', alignItems: 'center', justifyContent: 'center', textAlign: 'center' as const }}>
-              <div style={{ maxWidth: '520px', margin: '0 auto' }}>
+            <div className="tile col-12 reveal" data-reveal style={{ background: 'radial-gradient(ellipse 75% 95% at 50% 0%, rgba(176,141,58,0.14), transparent 62%), linear-gradient(135deg,#1d1d1f 0%,#3a2e0d 100%)', color: '#F8FBF8', minHeight: '320px', alignItems: 'center', justifyContent: 'center', textAlign: 'center' as const }}>
+              <div style={{ maxWidth: '640px', margin: '0 auto' }}>
                 <div style={{ fontFamily: "'Inter Tight'", fontSize: 'clamp(140px,18vw,220px)', fontWeight: 400, letterSpacing: '-0.02em', lineHeight: 1 }}>{'\u2135'}</div>
+                <div style={{ marginTop: '20px', fontFamily: 'var(--mono)', fontSize: '12px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(212,183,109,0.85)' }}>
+                  {alephDate} &middot; {alephLocation} &middot; {alephGrades}
+                </div>
               </div>
             </div>
 
@@ -1054,7 +1062,7 @@ export default function SpartanVanguard({ announcements, events, officers, confi
             </div>
           </div>
           <div className="legal">
-            <div>Copyright &copy; 2025&ndash;2026 Spartan Vanguard Math Club. All rights reserved.</div>
+            <div>Copyright &copy; {new Date().getFullYear()} Spartan Vanguard Math Club. All rights reserved.</div>
             <div>La Ca&ntilde;ada High School &middot; La Ca&ntilde;ada Flintridge, CA</div>
           </div>
         </div>

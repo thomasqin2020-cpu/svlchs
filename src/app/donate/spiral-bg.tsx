@@ -3,94 +3,79 @@
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 
-const VANGUARD_PALETTE: [number, number, number][] = [
-  [0.04, 0.04, 0.06],
-  [0.18, 0.59, 1.0],
-  [0.69, 0.55, 0.23],
-  [0.95, 0.84, 0.55],
-  [0.69, 0.55, 0.23],
-  [0.18, 0.59, 1.0],
-  [0.04, 0.04, 0.06],
-]
-const ARMS = 5
-const SPEED = 0.04
-const ARM_SPREAD = 0.5
-const RADIUS_GAIN = 2.0
-const INTENSITY_SCALE = 1.0
+// Rotating log-spiral "galaxy" field.
+//
+// Design constraints learned from the previous two iterations:
+// - fract(t)-swept radial ridges (the original) spend most of each cycle
+//   near-black and snap back when fract wraps — users read it as a frozen
+//   or broken background.
+// - Pure rotation with ARM_SPREAD=0.5 (the reverted 061ffd6) produced
+//   near-circular arcs whose rotation about their own center is invisible.
+//
+// This version keeps brightness constant over time (cosine bands — no
+// resets) and winds the arms tightly with log(r) so rotation is clearly
+// visible. Integer arm count makes the field seam-free: cos(N·θ) is
+// 2π-periodic, so no atan2 branch blending is needed.
+const ARMS = 3
+const WIND = 4.0 // log-spiral winding — higher = tighter arms, more visible spin
+const SPEED = 0.45 // phase speed; pattern angular velocity = SPEED / ARMS rad/s
+const INTENSITY = 1.25
 
 const VERTEX_SHADER = `void main() { gl_Position = vec4(position, 1.0); }`
 
-function buildFragmentShader(): string {
-  const colorDecls = VANGUARD_PALETTE.map(
-    (c, i) => `vec3 c${i} = vec3(${c[0].toFixed(4)}, ${c[1].toFixed(4)}, ${c[2].toFixed(4)});`,
-  ).join('\n          ')
-  const stops = VANGUARD_PALETTE.length
-  const mixCalls = VANGUARD_PALETTE.slice(1)
-    .map((_, i) => {
-      const lo = (i / (stops - 1)).toFixed(4)
-      const hi = ((i + 1) / (stops - 1)).toFixed(4)
-      return `col = mix(col, c${i + 1}, smoothstep(${lo}, ${hi}, t));`
-    })
-    .join('\n          ')
+const FRAGMENT_SHADER = `
+  precision highp float;
+  uniform vec2 resolution;
+  uniform float time;
+  uniform float intensityScale;
 
-  return `
-    precision highp float;
-    uniform vec2 resolution;
-    uniform float time;
-    uniform float armSpread;
-    uniform float radiusGain;
-    uniform float intensityScale;
+  void main(void) {
+    vec2 uv = (gl_FragCoord.xy * 2.0 - resolution.xy) / min(resolution.x, resolution.y);
+    float r = length(uv);
+    float a = atan(uv.y, uv.x);
 
-    const float TWO_PI = 6.28318530718;
+    // Primary arm field — slow continuous rotation, never resets.
+    float phase = float(${ARMS}) * a + ${WIND.toFixed(2)} * log(r + 0.05) - time * ${SPEED.toFixed(4)};
+    float arm = 0.5 + 0.5 * cos(phase);
+    float detail = 0.5 + 0.5 * cos(phase * 2.0 + 1.7);
+    float bands = pow(arm, 2.6) * (0.78 + 0.22 * detail);
 
-    vec3 getColor(float t) {
-        ${colorDecls}
-        vec3 col = c0;
-        ${mixCalls}
-        return col;
-    }
+    // Faint counter-rotating wisp layer for depth.
+    float phase2 = -2.0 * a + 3.0 * log(r + 0.06) + time * ${(SPEED * 0.6).toFixed(4)};
+    float wisp = pow(0.5 + 0.5 * cos(phase2), 3.0);
 
-    // The arm pattern at a given (radius, angle).
-    // Calling this twice with the natural angle and the wrapped angle
-    // (angle ± 2π) and blending between them removes the atan2 seam
-    // that otherwise runs along the −x axis.
-    float armPattern(float radius, float angle, float t, float spread, float gain, float jitter) {
-      float total = 0.0;
-      for (int i = 0; i < ${ARMS}; i++) {
-        float spiral = radius * gain + angle * spread;
-        total += 0.003 * float(i*i)
-               / abs(fract(t + float(i) * 0.02) * 5.0 - spiral + jitter);
-      }
-      return total;
-    }
+    float fall = exp(-r * 1.25);   // radial falloff to page black
+    float core = exp(-r * r * 9.0); // warm center glow
+    float halo = exp(-r * 2.6);
 
-    void main(void) {
-      vec2 uv = (gl_FragCoord.xy * 2.0 - resolution.xy) / min(resolution.x, resolution.y);
-      float t = time * ${SPEED.toFixed(4)};
-      float radius = length(uv);
-      float angle = atan(uv.y, uv.x);
-      float jitter = mod(uv.x + uv.y, 0.2);
+    float lum = bands * fall;
 
-      // Sample the spiral on the natural angle branch and on the
-      // wrapped branch (angle ± 2π). They agree everywhere except near
-      // the −x seam, where one branch is the "correct" continuation of
-      // the other side. Blend with a smoothstep that ramps up only as
-      // |angle| approaches π.
-      float angleAlt = angle + (angle < 0.0 ? TWO_PI : -TWO_PI);
-      float seamW = smoothstep(2.4, 3.14159, abs(angle));
-      float pNat = armPattern(radius, angle,    t, armSpread, radiusGain, jitter);
-      float pAlt = armPattern(radius, angleAlt, t, armSpread, radiusGain, jitter);
-      float total = mix(pNat, 0.5 * (pNat + pAlt), seamW);
+    vec3 navy  = vec3(0.014, 0.022, 0.042);
+    vec3 blue  = vec3(0.16, 0.45, 0.85);
+    vec3 gold  = vec3(0.72, 0.57, 0.25);
+    vec3 cream = vec3(0.95, 0.87, 0.64);
 
-      total *= intensityScale;
-      vec3 finalColor = getColor(fract(total * 0.25 + t * 0.1));
-      gl_FragColor = vec4(finalColor * total, 1.0);
-    }
-  `
-}
+    // Gold near the core, cooling to blue at the rim.
+    vec3 armTint = mix(gold, blue, smoothstep(0.18, 0.9, r));
+
+    vec3 col = navy * (0.45 + 0.55 * exp(-r * 0.8));
+    col += armTint * lum * 0.85;
+    col += blue * wisp * exp(-r * 1.6) * 0.10;
+    col += cream * core * 0.30;
+    col += gold * halo * 0.10;
+    col *= intensityScale;
+
+    // Dither to stop banding on the dark gradient.
+    float dn = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
+    col += (dn - 0.5) * (1.5 / 255.0);
+
+    gl_FragColor = vec4(col, 1.0);
+  }
+`
 
 export function SpiralBg() {
   const containerRef = useRef<HTMLDivElement>(null)
+  const fallbackRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const container = containerRef.current
@@ -98,9 +83,10 @@ export function SpiralBg() {
 
     let renderer: THREE.WebGLRenderer
     try {
-      renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' })
+      renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' })
     } catch {
-      // WebGL unavailable — fall back silently to the gradient veil only.
+      // WebGL unavailable — reveal the CSS conic-gradient fallback instead.
+      if (fallbackRef.current) fallbackRef.current.style.display = 'block'
       return
     }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
@@ -111,16 +97,14 @@ export function SpiralBg() {
     const scene = new THREE.Scene()
     const geometry = new THREE.PlaneGeometry(2, 2)
     const uniforms = {
-      time: { value: 1.0 },
+      time: { value: 0.0 },
       resolution: { value: new THREE.Vector2() },
-      armSpread: { value: ARM_SPREAD },
-      radiusGain: { value: RADIUS_GAIN },
-      intensityScale: { value: INTENSITY_SCALE },
+      intensityScale: { value: INTENSITY },
     }
     const material = new THREE.ShaderMaterial({
       uniforms,
       vertexShader: VERTEX_SHADER,
-      fragmentShader: buildFragmentShader(),
+      fragmentShader: FRAGMENT_SHADER,
     })
     const mesh = new THREE.Mesh(geometry, material)
     scene.add(mesh)
@@ -161,6 +145,7 @@ export function SpiralBg() {
   return (
     <div className="bg-anim bg-spiral" aria-hidden="true">
       <div ref={containerRef} style={{ position: 'absolute', inset: 0 }} />
+      <div ref={fallbackRef} className="bg-spiral-fallback" style={{ display: 'none' }} />
       <div className="bg-spiral-veil" />
     </div>
   )

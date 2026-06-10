@@ -42,7 +42,7 @@ const SECTION_DEFAULTS: Record<SectionId, { label: string; title: string; subtit
   competitions: {
     label: 'Competitions',
     title: 'Competitions.',
-    subtitle: 'Competitions we train for and participate in during the 2025–2026 season.',
+    subtitle: 'Competitions we train for and participate in during the 2026–2027 season.',
   },
   resources: {
     label: 'Resources',
