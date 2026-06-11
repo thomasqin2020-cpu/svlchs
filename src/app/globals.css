@@ -2394,3 +2394,342 @@ body[data-scroll-dir="up"] .edge-fade-bottom { opacity: 1; }
   }
 }
 
+/* ──────────────────────────────────────────────
+   SV — "Next up." live countdown band (homepage)
+   ────────────────────────────────────────────── */
+
+.sv-nextup-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px 56px;
+  margin-top: 18px;
+}
+.sv-nextup-item {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+.sv-nextup-name {
+  font-family: var(--display);
+  font-size: clamp(22px, 2.6vw, 30px);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+}
+.sv-nextup-date {
+  margin-top: 6px;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--fg-muted);
+}
+.sv-nextup-clock {
+  margin-top: 14px;
+  font-family: var(--mono);
+  font-size: clamp(18px, 2.4vw, 26px);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.sv-nextup-clock.sv-gold { color: var(--gold); }
+.sv-nextup-clock.sv-blue { color: var(--accent); }
+@media (max-width: 480px) {
+  .sv-nextup-clock { font-size: 16px; letter-spacing: 0.02em; }
+}
+
+/* ──────────────────────────────────────────────
+   FOOTER SUBSCRIBE BAND – "Stay in the loop."
+   ────────────────────────────────────────────── */
+
+.sv-subscribe {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 40px;
+  flex-wrap: wrap;
+  padding: 10px 0 26px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.sv-subscribe-copy {
+  flex: 0 1 360px;
+  min-width: 240px;
+}
+.sv-subscribe-title {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: var(--fg);
+}
+.sv-subscribe-sub {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--fg-muted);
+  letter-spacing: -0.01em;
+}
+.sv-subscribe-form {
+  flex: 1 1 320px;
+  max-width: 440px;
+}
+.sv-subscribe-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.sv-subscribe-input {
+  flex: 1 1 200px;
+  min-width: 0;
+  height: 44px;
+  padding: 0 16px;
+  background: var(--bg-dark-2, #161618);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  color: var(--fg);
+  font-family: var(--sans);
+  font-size: 14px;
+  letter-spacing: -0.01em;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+.sv-subscribe-input::placeholder { color: var(--fg-dim); }
+.sv-subscribe-input:focus {
+  border-color: rgba(41, 151, 255, 0.55);
+  background: #202022;
+}
+.sv-subscribe-btn {
+  height: 44px;
+  padding: 0 22px;
+  flex: 0 0 auto;
+}
+.sv-subscribe-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.sv-subscribe-status {
+  margin-top: 10px;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+}
+.sv-subscribe-status.ok { color: #9cd3ff; }
+.sv-subscribe-status.err { color: #ff9f9f; }
+.sv-subscribe-trap {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ──────────────────────────────────────────────
+   FAQ (homepage #faq section)
+   ────────────────────────────────────────────── */
+
+.sv-faq-list { margin-top: 34px; }
+.sv-faq-item { border-top: 1px solid var(--line); }
+.sv-faq-item:last-child { border-bottom: 1px solid var(--line); }
+.sv-faq-item summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 24px 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.sv-faq-item summary::-webkit-details-marker { display: none; }
+.sv-faq-item summary::marker { content: ''; }
+.sv-faq-item summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: var(--radius-sm);
+}
+.sv-faq-q {
+  font-family: var(--display);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+}
+.sv-faq-chev {
+  flex: none;
+  color: var(--fg-dim);
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), color 0.25s ease;
+}
+.sv-faq-item summary:hover .sv-faq-chev { color: var(--fg-muted); }
+.sv-faq-item[open] .sv-faq-chev { transform: rotate(90deg); color: var(--gold); }
+.sv-faq-a {
+  color: var(--fg-muted);
+  font-size: 15px;
+  line-height: 1.6;
+  max-width: 65ch;
+  padding: 0 0 26px;
+}
+.sv-faq-a p + p { margin-top: 10px; }
+.sv-faq-a a { color: var(--accent); text-decoration: none; }
+.sv-faq-a a:hover { text-decoration: underline; text-underline-offset: 2px; }
+.sv-faq-meeting {
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  color: var(--fg);
+}
+.sv-faq-item[open] .sv-faq-a {
+  animation: svFaqAnswerIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes svFaqAnswerIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (max-width: 680px) {
+  .sv-faq-item summary { padding: 20px 0; gap: 16px; }
+  .sv-faq-q { font-size: 17px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sv-faq-chev { transition: none; }
+  .sv-faq-item[open] .sv-faq-a { animation: none; }
+}
+
+/* ──────────────────────────────────────────────
+   PROBLEM OF THE WEEK (resources section tile)
+   ────────────────────────────────────────────── */
+
+.sv-potw-tile {
+  background:
+    radial-gradient(ellipse 90% 70% at 12% -12%, rgba(176, 141, 58, 0.12), transparent 60%),
+    var(--bg-tile);
+  cursor: default;
+}
+.sv-potw-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  flex-wrap: wrap;
+}
+.sv-potw-eyebrow {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.sv-potw-chip {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--fg-muted);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 5px 12px;
+  white-space: nowrap;
+}
+.sv-potw-statement {
+  margin-top: 16px;
+  font-family: var(--display);
+  font-size: clamp(20px, 2.4vw, 28px);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+  max-width: 60ch;
+}
+.sv-potw-answer {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line-soft);
+  animation: sv-potw-fade 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.sv-potw-answer-line {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.sv-potw-answer-label {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+.sv-potw-answer-value {
+  font-family: var(--display);
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--gold-soft);
+}
+.sv-potw-solution {
+  margin-top: 8px;
+  color: var(--fg-muted);
+  font-size: 15px;
+  line-height: 1.55;
+  letter-spacing: -0.01em;
+  max-width: 60ch;
+}
+@keyframes sv-potw-fade {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sv-potw-answer { animation: none; }
+}
+
+/* ──────────────────────────────────────────────
+   SV-FINISHING: micro-polish pack
+   (crest rotation, res/officer hovers, calendar CTA)
+   ────────────────────────────────────────────── */
+
+/* 1. Crest tick ring: ultra-slow rotation, subtle echo of the galaxy bg.
+   transform-box: view-box puts 50% 50% at the viewBox center (200,200).
+   Do NOT reuse the orphaned .crest-ticks rule above (fill-box + 200px
+   origin rotates off-center). */
+.sv-crest-ticks {
+  transform-box: view-box;
+  transform-origin: 50% 50%;
+  animation: svCrestSpin 150s linear infinite;
+}
+@keyframes svCrestSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* 2. Resource card hover: hairline border + existing -2px lift.
+   The translateY(-2px) hover already exists at .res-card:hover; this
+   later rule widens the transition so border-color does not snap.
+   1px transparent base border is layout-safe (global border-box). */
+.res-card {
+  border: 1px solid transparent;
+  transition: transform 0.3s, border-color 0.3s;
+}
+.res-card:hover { border-color: rgba(255, 255, 255, 0.16); }
+
+/* 3. Officer avatar: gold ring when the card is hovered. */
+.officer-avatar { transition: box-shadow 0.3s ease; }
+.officer-card:hover .officer-avatar { box-shadow: 0 0 0 2px rgba(176, 141, 58, 0.45); }
+
+/* 4. Calendar subscribe row under the Meeting Schedule tiles. */
+.sv-cal-row {
+  max-width: 980px;
+  margin: 8px auto 0;
+  padding: 0 22px 24px;
+  text-align: center;
+}
+.sv-cal-note {
+  margin-top: 8px;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--fg-dim);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sv-crest-ticks { animation: none; }
+}
+

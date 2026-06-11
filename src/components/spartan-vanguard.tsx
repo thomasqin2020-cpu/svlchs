@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic'
 import type { Announcement, Event, Officer, SiteConfig, Member } from '@/types/content'
 import type { SectionId, SiteLayoutData } from '@/lib/site-layout'
 import { DEFAULT_LAYOUT } from '@/lib/site-layout'
+import { SubscribeForm } from '@/components/subscribe-form'
 
 // Animated WebGL spiral background, lazy-loaded so Three.js only ships when
 // the page actually needs it. Same component used on /donate and the auth pages.
@@ -127,7 +128,7 @@ function CrestSVG() {
       </defs>
       <circle cx="200" cy="200" r="168" fill="none" stroke="url(#gC1)" strokeWidth="1.2" />
       <circle cx="200" cy="200" r="158" fill="none" stroke="url(#gC1)" strokeWidth="0.5" opacity="0.55" />
-      <g>{ticks}</g>
+      <g className="sv-crest-ticks">{ticks}</g>
       <circle cx="200" cy="200" r="120" fill="none" stroke="url(#gC1)" strokeWidth="0.6" opacity="0.6" />
       <g fontFamily="var(--display)" fontStyle="italic" fill="url(#gC1)" textAnchor="middle" opacity="0.9">
         {CREST_SYMBOLS.map((s, i) => (
@@ -208,6 +209,163 @@ function getInitials(name: string): string {
   return (parts[0]?.[0] || '').toUpperCase()
 }
 
+/* ---- "Next up." live countdown band ------------------------------- */
+
+/* Event-day start pinned to La Cañada wall time (UTC-8; the 1h DST drift is
+   immaterial at day granularity). Identical on server and client, so SSR and
+   hydration always agree. */
+function eventStartMs(dateStr: string): number {
+  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr.trim())
+  if (iso) return Date.UTC(+iso[1], +iso[2] - 1, +iso[3], 8)
+  // Month-precision placeholders ("February 2027") stay out of the countdown:
+  // ticking toward an unannounced day would be false precision.
+  if (!/^[A-Za-z]+ \d{1,2}, \d{4}$/.test(dateStr.trim())) return NaN
+  const parsed = new Date(dateStr)
+  if (Number.isNaN(parsed.getTime())) return NaN
+  // Human formats parse as local midnight in every TZ, so the local date
+  // parts name the same calendar date everywhere.
+  return Date.UTC(parsed.getFullYear(), parsed.getMonth(), parsed.getDate(), 8)
+}
+
+function formatCountdown(ms: number): string {
+  const total = Math.max(0, Math.floor(ms / 1000))
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const d = Math.floor(total / 86400)
+  const h = Math.floor((total % 86400) / 3600)
+  const m = Math.floor((total % 3600) / 60)
+  return `${pad(d)}d : ${pad(h)}h : ${pad(m)}m : ${pad(total % 60)}s`
+}
+
+// Captured once per page load: calling Date.now() during render violates
+// the react-hooks purity rule, and the pre-mount filter only needs a
+// coarse "now" (the ticking value takes over after mount).
+const INITIAL_NOW = Date.now()
+
+function NextUpBand({ events }: { events: Event[] }) {
+  // null until mounted: the server render and first client render must match,
+  // so the ticking clock only starts inside useEffect.
+  const [now, setNow] = useState<number | null>(null)
+
+  useEffect(() => {
+    // setTimeout(0) instead of a synchronous set: starts the clock on the
+    // next tick without triggering the set-state-in-effect cascade lint.
+    const t0 = window.setTimeout(() => setNow(Date.now()), 0)
+    const id = window.setInterval(() => setNow(Date.now()), 1000)
+    return () => { window.clearTimeout(t0); window.clearInterval(id) }
+  }, [])
+
+  const reference = now ?? INITIAL_NOW
+  const upcoming = events
+    .map(ev => ({ ev, t: eventStartMs(ev.date) }))
+    .filter(({ t }) => Number.isFinite(t) && t > reference)
+    .sort((a, b) => a.t - b.t)
+    .slice(0, 2)
+
+  if (upcoming.length === 0) return null
+
+  return (
+    <section className="tiles" style={{ paddingTop: '0' }}>
+      <div className="tile col-12 reveal" data-reveal style={{ minHeight: '180px', cursor: 'default' }}>
+        <div>
+          <div className="tile-eyebrow gold" style={{ fontFamily: 'var(--mono)', fontSize: '12px', letterSpacing: '0.14em' }}>NEXT UP</div>
+          <div className="sv-nextup-grid">
+            {upcoming.map(({ ev, t }, i) => (
+              <div key={ev.id} className="sv-nextup-item">
+                <div className="sv-nextup-name">{ev.name}</div>
+                <div className="sv-nextup-date">{ev.location ? `${ev.date} · ${ev.location}` : ev.date}</div>
+                <div className={`sv-nextup-clock ${i === 0 ? 'sv-gold' : 'sv-blue'}`}>
+                  {now === null ? '–' : formatCountdown(t - now)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ---- Problem of the Week ------------------------------------------ */
+const POTW_PROBLEMS = [
+  {
+    statement: 'What is the smallest positive integer n for which n(n + 1) is a multiple of 1000?',
+    tag: 'AMC 10 · NUMBER THEORY',
+    answer: '375',
+    solution: 'n and n + 1 share no common factor, so 8 must divide one of them and 125 the other. The two splits give n = 375 (since 375 × 376 = 141000) and n = 624, so the smallest is 375.',
+  },
+  {
+    statement: 'A rectangle has perimeter 46 and a diagonal of length 17. What is the area of the rectangle?',
+    tag: 'AMC 10 · GEOMETRY',
+    answer: '120',
+    solution: 'With l + w = 23 and l² + w² = 17² = 289, squaring the sum gives 2lw = 529 - 289 = 240. The area is 120, and the sides turn out to be 8 and 15.',
+  },
+  {
+    statement: 'In how many different ways can a 2 × 10 grid be completely covered by ten 1 × 2 dominoes?',
+    tag: 'AMC 10 · COUNTING',
+    answer: '89',
+    solution: 'The leftmost column is either one vertical domino, leaving a 2 × 9 grid, or two stacked horizontals, leaving a 2 × 8. Counts follow the Fibonacci pattern 1, 2, 3, 5, 8, and so on, reaching 89 at length 10.',
+  },
+  {
+    statement: 'The real number x satisfies x + 1/x = 4. What is the value of x³ + 1/x³?',
+    tag: 'AMC 10 · ALGEBRA',
+    answer: '52',
+    solution: 'Cube the given equation: (x + 1/x)³ = x³ + 1/x³ + 3(x + 1/x). So x³ + 1/x³ = 64 - 12 = 52.',
+  },
+  {
+    statement: 'Two standard six-sided dice are rolled. What is the probability that the product of the two numbers rolled is a multiple of 6?',
+    tag: 'AMC 10 · PROBABILITY',
+    answer: '5/12',
+    solution: 'Count the failures: the product misses a factor of 2 in 9 outcomes, misses a factor of 3 in 16, and misses both in 4. So 9 + 16 - 4 = 21 outcomes fail, and 15/36 = 5/12 succeed.',
+  },
+  {
+    statement: 'The numbers 1 through 10 are written on a board. Each move, you erase two numbers a and b and write a + b + 1. After nine moves one number remains. What is it?',
+    tag: 'AMC 10 · INVARIANTS',
+    answer: '64',
+    solution: 'Every move raises the total on the board by exactly 1, no matter which pair you erase. The sum starts at 55, so after nine moves the survivor is 55 + 9 = 64.',
+  },
+]
+
+function isoWeekNumber(date: Date): number {
+  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
+  const day = d.getUTCDay() || 7
+  d.setUTCDate(d.getUTCDate() + 4 - day)
+  const yearStart = Date.UTC(d.getUTCFullYear(), 0, 1)
+  return Math.ceil(((d.getTime() - yearStart) / 86400000 + 1) / 7)
+}
+
+function PotwTile() {
+  const [problemIndex] = useState(() => isoWeekNumber(new Date()) % POTW_PROBLEMS.length)
+  const [revealed, setRevealed] = useState(false)
+  const problem = POTW_PROBLEMS[problemIndex]
+  return (
+    <section className="tiles" style={{ paddingTop: 0, paddingBottom: '24px' }}>
+      <div className="tile col-12 sv-potw-tile reveal" data-reveal style={{ minHeight: '240px' }}>
+        <div>
+          <div className="sv-potw-head">
+            <div className="sv-potw-eyebrow">Problem of the Week</div>
+            <span className="sv-potw-chip">{problem.tag}</span>
+          </div>
+          <p className="sv-potw-statement">{problem.statement}</p>
+          {revealed && (
+            <div className="sv-potw-answer">
+              <div className="sv-potw-answer-line">
+                <span className="sv-potw-answer-label">Answer</span>
+                <span className="sv-potw-answer-value">{problem.answer}</span>
+              </div>
+              <p className="sv-potw-solution">{problem.solution}</p>
+            </div>
+          )}
+        </div>
+        <div className="tile-ctas">
+          <button type="button" className="pill ghost" aria-expanded={revealed} onClick={() => setRevealed(v => !v)}>
+            {revealed ? 'Hide answer' : 'Reveal answer'}
+          </button>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 /* ------------------------------------------------------------------ */
 /*  Props                                                             */
 /* ------------------------------------------------------------------ */
@@ -236,6 +394,9 @@ export default function SpartanVanguard({ announcements, events, officers, confi
     if (!s) return undefined
     return { order: s.order, display: s.visible ? undefined : 'none' }
   }
+  // Dividers inherit BOTH order and visibility from the section above them,
+  // so hiding a section in /admin/site-layout hides its divider too.
+  const dividerStyle = (id: SectionId): React.CSSProperties | undefined => sectionStyle(id)
   const sectionTitle = (id: SectionId, fallback: string) => sectionMap.get(id)?.title ?? fallback
   const sectionSubtitle = (id: SectionId) => sectionMap.get(id)?.subtitle ?? ''
   const [activeSection, setActiveSection] = useState('home')
@@ -284,6 +445,72 @@ export default function SpartanVanguard({ announcements, events, officers, confi
     clickScrollRef.current = window.setTimeout(() => { clickScrollRef.current = null }, 900)
     window.scrollTo({ top, behavior: 'smooth' })
   }
+
+  /* --- FAQ content (config-aware: meeting strings come from admin) */
+  const faqItems: Array<{ q: string; a: React.ReactNode }> = [
+    {
+      q: 'Who can join Spartan Vanguard?',
+      a: (
+        <p>
+          Any La Ca&ntilde;ada High School student. There is no application and no tryout, and every
+          experience level is welcome, from first-time problem solvers to seasoned competitors. Just
+          show up to a practice.
+        </p>
+      ),
+    },
+    {
+      q: 'Does it cost anything to join?',
+      a: (
+        <p>
+          No. Membership, weekly practices, and materials are free. Donations from families and local
+          sponsors are what keep our hosted competitions free for every participant.
+        </p>
+      ),
+    },
+    {
+      q: 'When and where are meetings?',
+      a: (
+        <>
+          <p className="sv-faq-meeting">{m1Parts.join(' · ')}</p>
+          <p className="sv-faq-meeting">{m2Parts.join(' · ')}</p>
+          <p>Practices run weekly during the school year at La Ca&ntilde;ada High School.</p>
+        </>
+      ),
+    },
+    {
+      q: 'Do I need competition experience?',
+      a: (
+        <p>
+          No. Practices start from the fundamentals and build toward contest-level problems. Officers
+          teach each topic before the problem set, so you can join at any point in the year and keep up.
+        </p>
+      ),
+    },
+    {
+      q: 'Which competitions does the club compete in?',
+      a: (
+        <p>
+          Members take the AMC 10/12, and qualifying scores advance to AIME. We also send teams to the
+          Berkeley Math Tournament, Stanford Math Tournament, and Caltech Math Meet, and we host two of
+          our own: VMT for grades 6&ndash;8 and Aleph for grades 9&ndash;12. See{' '}
+          <a href="#competitions" onClick={(e) => { e.preventDefault(); scrollToSection('competitions') }}>Competitions</a>{' '}
+          for the full list.
+        </p>
+      ),
+    },
+    {
+      q: 'How can parents help?',
+      a: (
+        <p>
+          Volunteer at VMT and Aleph: parents run check-in, proctor rounds, and help with food on
+          competition day (<a href={vmtVolunteer} target="_blank" rel="noopener noreferrer">VMT form</a>,{' '}
+          <a href={alephVolunteer} target="_blank" rel="noopener noreferrer">Aleph form</a>). You can also{' '}
+          <a href="/donate">donate</a> to cover testing materials, awards, and pizza. Both keep our
+          competitions free for every student.
+        </p>
+      ),
+    },
+  ]
 
   /* --- mountAll-style reveal: stagger + auto-add reveal class ---- */
   useEffect(() => {
@@ -554,18 +781,18 @@ export default function SpartanVanguard({ announcements, events, officers, confi
       {/* -- Marquee Band -- */}
       <div className="marquee-band">
         <div className="marquee-track">
-          <span><em>Now signing up.</em>  Vanguard Math Tournament &middot; Grades 6&ndash;8 &middot; Feb 21, 2026</span>
+          <span><em>VMT returns.</em>  Vanguard Math Tournament &middot; Grades 6&ndash;8 &middot; February 2027</span>
           <span>&middot;</span>
-          <span><em>Now signing up.</em>  Aleph Competition &middot; Grades 9&ndash;12 &middot; Mar 21, 2026</span>
+          <span><em>Aleph returns.</em>  Aleph Competition &middot; Grades 9&ndash;12 &middot; March 2027</span>
           <span>&middot;</span>
           <span><em>Free pizza.</em>  For participants &amp; volunteers</span>
           <span>&middot;</span>
           <span><em>Weekly meetings.</em>  Mondays &amp; Wednesdays &middot; La Ca&ntilde;ada HS</span>
           <span>&middot;</span>
           {/* duplicate for seamless loop */}
-          <span><em>Now signing up.</em>  Vanguard Math Tournament &middot; Grades 6&ndash;8 &middot; Feb 21, 2026</span>
+          <span><em>VMT returns.</em>  Vanguard Math Tournament &middot; Grades 6&ndash;8 &middot; February 2027</span>
           <span>&middot;</span>
-          <span><em>Now signing up.</em>  Aleph Competition &middot; Grades 9&ndash;12 &middot; Mar 21, 2026</span>
+          <span><em>Aleph returns.</em>  Aleph Competition &middot; Grades 9&ndash;12 &middot; March 2027</span>
           <span>&middot;</span>
           <span><em>Free pizza.</em>  For participants &amp; volunteers</span>
           <span>&middot;</span>
@@ -673,6 +900,9 @@ export default function SpartanVanguard({ announcements, events, officers, confi
             </div>
           </section>
 
+          {/* Next up. live countdown band */}
+          <NextUpBand events={events} />
+
           {/* Additional Notion announcements */}
           {announcements.length > 1 && (
             <section className="tiles" style={{ paddingTop: '0' }}>
@@ -709,9 +939,19 @@ export default function SpartanVanguard({ announcements, events, officers, confi
             </div>
           </section>
 
+          {/* Calendar subscribe (the .ics feed carries competition dates) */}
+          <div className="sv-cal-row reveal" data-reveal>
+            <a href="/events.ics" className="link-cta">Subscribe to the competition calendar (.ics) <Chev /></a>
+            <p className="sv-cal-note">Competition dates &middot; works with Apple Calendar, Google Calendar, and Outlook</p>
+          </div>
+
         </section>
 
-        <div className="section-divider reveal" data-reveal />
+        {/* Dividers carry the order of the section above them: #app is a
+            flex column and the admin layout assigns inline order 0-5 to the
+            page-sections, so an order-less divider would flex-sort to the
+            top instead of staying between its neighbors. */}
+        <div className="section-divider reveal" data-reveal style={dividerStyle('home')} />
 
         {/* ============================================================ */}
         {/*  COMPETITIONS                                                */}
@@ -753,7 +993,7 @@ export default function SpartanVanguard({ announcements, events, officers, confi
           </div>
         </section>
 
-        <div className="section-divider reveal" data-reveal />
+        <div className="section-divider reveal" data-reveal style={dividerStyle('competitions')} />
 
         {/* ============================================================ */}
         {/*  RESOURCES                                                   */}
@@ -763,6 +1003,8 @@ export default function SpartanVanguard({ announcements, events, officers, confi
             <h1>{sectionTitle('resources', 'Resources.')}</h1>
             <p className="hero-sub">{sectionSubtitle('resources') || 'Study materials, practice problems, and useful links for competition math.'}</p>
           </section>
+
+          <PotwTile />
 
           <div className="res-wrap">
             <div className="h2 reveal" data-reveal style={{ fontSize: '28px', marginBottom: '18px' }}>Recommended Resources</div>
@@ -806,7 +1048,7 @@ export default function SpartanVanguard({ announcements, events, officers, confi
           </div>
         </section>
 
-        <div className="section-divider reveal" data-reveal />
+        <div className="section-divider reveal" data-reveal style={dividerStyle('resources')} />
 
         {/* ============================================================ */}
         {/*  VMT                                                         */}
@@ -819,7 +1061,7 @@ export default function SpartanVanguard({ announcements, events, officers, confi
           </section>
 
           <section className="officers-section" style={{ paddingTop: '20px' }}>
-            <div className="h2 reveal" data-reveal>2026 Tournament.</div>
+            <div className="h2 reveal" data-reveal>2027 Tournament.</div>
             <div className="event-meta-row reveal" data-reveal>
               <div className="event-meta-item"><div className="label">Date</div><div className="value">{vmtDate}</div></div>
               <div className="event-meta-item"><div className="label">Location</div><div className="value">{vmtLocation}</div></div>
@@ -911,7 +1153,7 @@ export default function SpartanVanguard({ announcements, events, officers, confi
           </section>
         </section>
 
-        <div className="section-divider reveal" data-reveal />
+        <div className="section-divider reveal" data-reveal style={dividerStyle('vmt')} />
 
         {/* ============================================================ */}
         {/*  ALEPH                                                       */}
@@ -924,7 +1166,7 @@ export default function SpartanVanguard({ announcements, events, officers, confi
           </section>
 
           <section className="officers-section" style={{ paddingTop: '20px' }}>
-            <div className="h2 reveal" data-reveal>2026 Competition.</div>
+            <div className="h2 reveal" data-reveal>2027 Competition.</div>
             <div className="event-meta-row reveal" data-reveal>
               <div className="event-meta-item"><div className="label">Date</div><div className="value">{alephDate}</div></div>
               <div className="event-meta-item"><div className="label">Location</div><div className="value">{alephLocation}</div></div>
@@ -987,7 +1229,7 @@ export default function SpartanVanguard({ announcements, events, officers, confi
           </section>
         </section>
 
-        <div className="section-divider reveal" data-reveal />
+        <div className="section-divider reveal" data-reveal style={dividerStyle('aleph')} />
 
         {/* ============================================================ */}
         {/*  TEAM                                                        */}
@@ -1020,11 +1262,49 @@ export default function SpartanVanguard({ announcements, events, officers, confi
           </section>
         </section>
 
+
+        <div className="section-divider reveal" data-reveal style={{ order: 98 }} />
+
+        {/* ============================================================ */}
+        {/*  FAQ                                                         */}
+        {/* ============================================================ */}
+        {/* #app is a flex column and the admin layout assigns order 0-5
+            to the six page-sections, so explicit orders pin FAQ (and its
+            divider) after every reorderable section. */}
+        <section id="faq" className="page-section" style={{ order: 99 }}>
+          <section className="officers-section" style={{ paddingBottom: '80px' }}>
+            <div className="h2 reveal" data-reveal>FAQ.</div>
+            <p className="h2-sub reveal" data-reveal>Quick answers for parents and prospective members.</p>
+            <div className="sv-faq-list">
+              {faqItems.map((item) => (
+                <details key={item.q} className="sv-faq-item reveal" data-reveal>
+                  <summary>
+                    <span className="sv-faq-q">{item.q}</span>
+                    <svg className="sv-faq-chev" viewBox="0 0 10 18" width="9" height="15" fill="none"
+                      stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"
+                      aria-hidden="true">
+                      <polyline points="1,1 9,9 1,17" />
+                    </svg>
+                  </summary>
+                  <div className="sv-faq-a">{item.a}</div>
+                </details>
+              ))}
+            </div>
+          </section>
+        </section>
+
       </main>
 
       {/* -- Footer -- */}
       <footer className="footer">
         <div className="footer-inner">
+          <div className="sv-subscribe reveal" data-reveal>
+            <div className="sv-subscribe-copy">
+              <div className="sv-subscribe-title">Stay in the loop.</div>
+              <p className="sv-subscribe-sub">Announcements, meeting changes, and competition dates, straight to your inbox.</p>
+            </div>
+            <SubscribeForm />
+          </div>
           <div className="footer-cols">
             <div className="footer-col">
               <h5>Members</h5>
@@ -1052,6 +1332,7 @@ export default function SpartanVanguard({ announcements, events, officers, confi
               <a href="#resources" onClick={(e) => { e.preventDefault(); scrollToSection('resources') }}>Resources</a>
               <a href="#meetings" onClick={(e) => { e.preventDefault(); scrollToSection('meetings') }}>Meeting Schedule</a>
               <a href="#team" onClick={(e) => { e.preventDefault(); scrollToSection('team') }}>Officers</a>
+              <a href="#faq" onClick={(e) => { e.preventDefault(); document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' }) }}>FAQ</a>
             </div>
             <div className="footer-col">
               <h5>Contact</h5>

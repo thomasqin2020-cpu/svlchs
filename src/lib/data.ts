@@ -11,7 +11,9 @@ const fallbackEvents: Event[] = [
   {
     id: 'vmt-fallback',
     name: 'Vanguard Math Tournament',
-    date: 'February 21, 2026',
+    // Month precision until the 2027 date is announced: the countdown band
+    // deliberately ignores dates without a day-of-month.
+    date: 'February 2027',
     location: 'La Cañada High School',
     grades: 'Grades 6–8',
     signUpLink: '/competitions/vmt/register',
@@ -22,7 +24,7 @@ const fallbackEvents: Event[] = [
   {
     id: 'aleph-fallback',
     name: 'Aleph',
-    date: 'March 21, 2026',
+    date: 'March 2027',
     location: 'La Cañada High School',
     grades: 'Grades 9–12',
     signUpLink: '/competitions/aleph/register',
