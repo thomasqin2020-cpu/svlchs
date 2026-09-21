@@ -38,8 +38,8 @@ interface HeroSectionProps {
 
 export function HeroSection({ announcements, events, officers, config }: HeroSectionProps) {
     const announcementText = config['announcement_text'] || 'Spartan Vanguard hosts an annual spring math competition for middle and high school students. Organized and run entirely by high school volunteers, the event takes place at La Cañada High School. We welcome anyone with an interest in competitive math to join us, and participants and volunteers can enjoy free pizza!'
-    const meeting1 = config['meeting_1'] || 'Grades 9–10 | Monday, 3:30–5:00 PM | Room 217'
-    const meeting2 = config['meeting_2'] || 'Grades 7–8 | Wednesday, 3:30–4:30 PM | Room 724'
+    const meeting1 = config['meeting_1'] || 'Grades 9–12 | Thursday, 3:30–5:00 PM | Room 315'
+    const meeting2 = config['meeting_2'] || 'Grades 7–8 | Tuesday, 3:30–4:30 PM | Room 725'
     const classroomCode = config['google_classroom'] || 'hsx4c54'
     const remindCode = config['remind'] || '@lchssv'
     const email1 = config['email_1'] || 'vchen26@mylcusd.net'
@@ -183,14 +183,14 @@ export function HeroSection({ announcements, events, officers, config }: HeroSec
                         <h2 className="text-xl font-semibold mb-8">Meeting Schedule</h2>
                         <div className="grid max-w-3xl grid-cols-1 gap-6 sm:grid-cols-2">
                             <div className="rounded-xl border-l-2 border-primary bg-secondary p-6">
-                                <h3 className="text-lg font-semibold">{m1Parts[0] || 'Grades 9–10'}</h3>
-                                <p className="text-sm text-muted-foreground mt-2">{m1Parts[1] || 'Monday, 3:30–5:00 PM'}</p>
-                                <p className="text-sm text-muted-foreground">{m1Parts[2] || 'Room 217'}</p>
+                                <h3 className="text-lg font-semibold">{m1Parts[0] || 'Grades 9–12'}</h3>
+                                <p className="text-sm text-muted-foreground mt-2">{m1Parts[1] || 'Thursday, 3:30–5:00 PM'}</p>
+                                <p className="text-sm text-muted-foreground">{m1Parts[2] || 'Room 315'}</p>
                             </div>
                             <div className="rounded-xl border-l-2 border-primary bg-secondary p-6">
                                 <h3 className="text-lg font-semibold">{m2Parts[0] || 'Grades 7–8'}</h3>
-                                <p className="text-sm text-muted-foreground mt-2">{m2Parts[1] || 'Wednesday, 3:30–4:30 PM'}</p>
-                                <p className="text-sm text-muted-foreground">{m2Parts[2] || 'Room 724'}</p>
+                                <p className="text-sm text-muted-foreground mt-2">{m2Parts[1] || 'Tuesday, 3:30–4:30 PM'}</p>
+                                <p className="text-sm text-muted-foreground">{m2Parts[2] || 'Room 725'}</p>
                             </div>
                         </div>
                     </div>

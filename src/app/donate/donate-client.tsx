@@ -20,7 +20,7 @@ interface ImpactTier {
 
 const IMPACT_TIERS: ImpactTier[] = [
   { min: 0, icon: 'π', text: 'Helps cover printing for weekly problem sets.' },
-  { min: 10, icon: 'θ', text: 'Buys pizza for one Friday meeting.' },
+  { min: 10, icon: 'θ', text: 'Buys pizza for one weekly meeting.' },
   { min: 25, icon: 'Σ', text: 'Sponsors testing materials for two students at AMC.' },
   { min: 50, icon: 'ʃ', text: 'Covers tournament registration for one VMT volunteer.' },
   { min: 100, icon: 'Ω', text: 'Funds a full Aleph round — testing, food, and prizes.' },
