@@ -410,7 +410,7 @@ export default function SpartanVanguard({ announcements, events, officers, confi
 
   /* --- derived config -------------------------------------------- */
   const announcementText = config['announcement_text'] || 'Spartan Vanguard hosts an annual spring math competition for middle and high school students. Organized and run entirely by high school volunteers, the event takes place at La Ca\u00f1ada High School. We welcome anyone with an interest in competitive math to join us, and participants and volunteers can enjoy free pizza!'
-  const meeting1 = config['meeting_1'] || 'Grades 9\u201312 | Thursday, 3:30\u20135:00 PM | Room 315'
+  const meeting1 = config['meeting_1'] || 'Grades 9\u201312 | Thursday, 3:30\u20134:30 PM | Room 315'
   const meeting2 = config['meeting_2'] || 'Grades 7\u20138 | Tuesday, 3:30\u20134:30 PM | Room 725'
   const remindCode = config['remind'] || '@lchssv'
   const email1 = config['email_1'] || 'vchen26@mylcusd.net'
@@ -926,7 +926,7 @@ export default function SpartanVanguard({ announcements, events, officers, confi
             <div className="tile col-6 gold-bg reveal" data-reveal style={{ minHeight: '240px' }}>
               <div>
                 <div className="tile-eyebrow">{m1Parts[0] || 'Grades 9\u201312'}</div>
-                <h3 className="tile-title">{(m1Parts[1] || 'Thursday, 3:30\u20135:00 PM').split(',').map((part, i) => i === 0 ? part.trim() : <React.Fragment key={i}><br />{part.trim()}</React.Fragment>)}</h3>
+                <h3 className="tile-title">{(m1Parts[1] || 'Thursday, 3:30\u20134:30 PM').split(',').map((part, i) => i === 0 ? part.trim() : <React.Fragment key={i}><br />{part.trim()}</React.Fragment>)}</h3>
                 <p className="tile-desc" style={{ marginTop: '12px' }}>{m1Parts[2] || 'Room 315'}</p>
               </div>
             </div>

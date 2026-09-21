@@ -1,5 +1,5 @@
 {
   "_comment": "Code-owned site_config keys. Anything listed here is pushed to Supabase on every deploy by scripts/sync-site-config.mjs and is NOT editable from /admin (edits get overwritten on the next deploy). Keys NOT listed here stay admin-editable. src/lib/data.ts imports this file as its fallback for these keys, so code and database cannot drift.",
-  "meeting_1": "Grades 9–12 | Thursday, 3:30–5:00 PM | Room 315",
+  "meeting_1": "Grades 9–12 | Thursday, 3:30–4:30 PM | Room 315",
   "meeting_2": "Grades 7–8 | Tuesday, 3:30–4:30 PM | Room 725"
 }

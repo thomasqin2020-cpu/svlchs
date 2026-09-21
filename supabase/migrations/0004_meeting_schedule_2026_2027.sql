@@ -12,6 +12,6 @@
 -- ============================================================================
 
 insert into public.site_config (key, value) values
-  ('meeting_1', 'Grades 9–12 | Thursday, 3:30–5:00 PM | Room 315'),
+  ('meeting_1', 'Grades 9–12 | Thursday, 3:30–4:30 PM | Room 315'),
   ('meeting_2', 'Grades 7–8 | Tuesday, 3:30–4:30 PM | Room 725')
 on conflict (key) do update set value = excluded.value;

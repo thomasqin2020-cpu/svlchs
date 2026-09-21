@@ -10,7 +10,7 @@ insert into public.site_config (key, value) values
   ('remind', '@lchssv'),
   ('email_1', 'vchen26@mylcusd.net'),
   ('email_2', 'nchen26@mylcusd.net'),
-  ('meeting_1', 'Grades 9–12 | Thursday, 3:30–5:00 PM | Room 315'),
+  ('meeting_1', 'Grades 9–12 | Thursday, 3:30–4:30 PM | Room 315'),
   ('meeting_2', 'Grades 7–8 | Tuesday, 3:30–4:30 PM | Room 725'),
   ('announcement_text', 'Spartan Vanguard hosts an annual spring math competition for middle and high school students. Organized and run entirely by high school volunteers, the event takes place at La Cañada High School. We welcome anyone with an interest in competitive math to join us, and participants and volunteers can enjoy free pizza!')
 on conflict (key) do nothing;
