@@ -410,8 +410,8 @@ export default function SpartanVanguard({ announcements, events, officers, confi
 
   /* --- derived config -------------------------------------------- */
   const announcementText = config['announcement_text'] || 'Spartan Vanguard hosts an annual spring math competition for middle and high school students. Organized and run entirely by high school volunteers, the event takes place at La Ca\u00f1ada High School. We welcome anyone with an interest in competitive math to join us, and participants and volunteers can enjoy free pizza!'
-  const meeting1 = config['meeting_1'] || 'Grades 9\u201310 | Monday, 3:30\u20135:00 PM | Room 217'
-  const meeting2 = config['meeting_2'] || 'Grades 7\u20138 | Wednesday, 3:30\u20134:30 PM | Room 724'
+  const meeting1 = config['meeting_1'] || 'Grades 9\u201312 | Thursday, 3:30\u20135:00 PM | Room 315'
+  const meeting2 = config['meeting_2'] || 'Grades 7\u20138 | Tuesday, 3:30\u20134:30 PM | Room 725'
   const remindCode = config['remind'] || '@lchssv'
   const email1 = config['email_1'] || 'vchen26@mylcusd.net'
   const email2 = config['email_2'] || 'nchen26@mylcusd.net'
@@ -787,7 +787,7 @@ export default function SpartanVanguard({ announcements, events, officers, confi
           <span>&middot;</span>
           <span><em>Free pizza.</em>  For participants &amp; volunteers</span>
           <span>&middot;</span>
-          <span><em>Weekly meetings.</em>  Mondays &amp; Wednesdays &middot; La Ca&ntilde;ada HS</span>
+          <span><em>Weekly meetings.</em>  Tuesdays &amp; Thursdays &middot; La Ca&ntilde;ada HS</span>
           <span>&middot;</span>
           {/* duplicate for seamless loop */}
           <span><em>VMT returns.</em>  Vanguard Math Tournament &middot; Grades 6&ndash;8 &middot; February 2027</span>
@@ -796,7 +796,7 @@ export default function SpartanVanguard({ announcements, events, officers, confi
           <span>&middot;</span>
           <span><em>Free pizza.</em>  For participants &amp; volunteers</span>
           <span>&middot;</span>
-          <span><em>Weekly meetings.</em>  Mondays &amp; Wednesdays &middot; La Ca&ntilde;ada HS</span>
+          <span><em>Weekly meetings.</em>  Tuesdays &amp; Thursdays &middot; La Ca&ntilde;ada HS</span>
           <span>&middot;</span>
         </div>
       </div>
@@ -925,16 +925,16 @@ export default function SpartanVanguard({ announcements, events, officers, confi
           <section className="tiles" style={{ paddingTop: '16px', paddingBottom: '40px' }}>
             <div className="tile col-6 gold-bg reveal" data-reveal style={{ minHeight: '240px' }}>
               <div>
-                <div className="tile-eyebrow">{m1Parts[0] || 'Grades 9\u201310'}</div>
-                <h3 className="tile-title">{(m1Parts[1] || 'Monday, 3:30\u20135:00 PM').split(',').map((part, i) => i === 0 ? part.trim() : <React.Fragment key={i}><br />{part.trim()}</React.Fragment>)}</h3>
-                <p className="tile-desc" style={{ marginTop: '12px' }}>{m1Parts[2] || 'Room 217'}</p>
+                <div className="tile-eyebrow">{m1Parts[0] || 'Grades 9\u201312'}</div>
+                <h3 className="tile-title">{(m1Parts[1] || 'Thursday, 3:30\u20135:00 PM').split(',').map((part, i) => i === 0 ? part.trim() : <React.Fragment key={i}><br />{part.trim()}</React.Fragment>)}</h3>
+                <p className="tile-desc" style={{ marginTop: '12px' }}>{m1Parts[2] || 'Room 315'}</p>
               </div>
             </div>
             <div className="tile col-6 reveal" data-reveal style={{ minHeight: '240px' }}>
               <div>
                 <div className="tile-eyebrow">{m2Parts[0] || 'Grades 7\u20138'}</div>
-                <h3 className="tile-title">{(m2Parts[1] || 'Wednesday, 3:30\u20134:30 PM').split(',').map((part, i) => i === 0 ? part.trim() : <React.Fragment key={i}><br />{part.trim()}</React.Fragment>)}</h3>
-                <p className="tile-desc" style={{ marginTop: '12px' }}>{m2Parts[2] || 'Room 724'}</p>
+                <h3 className="tile-title">{(m2Parts[1] || 'Tuesday, 3:30\u20134:30 PM').split(',').map((part, i) => i === 0 ? part.trim() : <React.Fragment key={i}><br />{part.trim()}</React.Fragment>)}</h3>
+                <p className="tile-desc" style={{ marginTop: '12px' }}>{m2Parts[2] || 'Room 725'}</p>
               </div>
             </div>
           </section>
