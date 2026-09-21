@@ -245,7 +245,7 @@ export function DonateClient() {
           <span className="dp-gfm-eyebrow">Spartan Vanguard · Donate</span>
           <h1 className="dp-gfm-title">Support the math club.</h1>
           <p className="dp-gfm-sub">
-            Our easiest way to give. Donations fund testing materials, pizza for Friday
+            Our easiest way to give. Donations fund testing materials, pizza for weekly
             meetings, competition fees, and travel for our team. La Cañada High School is a
             public school — gifts may be tax-deductible.
           </p>
