@@ -1,6 +1,13 @@
 import { createSupabaseServerClient } from './supabase/server'
 import type { Announcement, Event, Officer, SiteConfig } from '@/types/content'
 import { DEFAULT_LAYOUT, normalizeLayout, type SiteLayoutData } from './site-layout'
+import managedConfigJson from '../../supabase/managed-config.json'
+
+// Keys that code owns. scripts/sync-site-config.mjs pushes these same values to
+// the site_config table on every deploy, so the database can never drift from
+// the repo the way the meeting schedule did. Editing them in /admin will be
+// overwritten on the next deploy — change them in supabase/managed-config.json.
+const { _comment: _managedConfigComment, ...managedConfig } = managedConfigJson
 
 // ----------------------------------------------------------------------------
 // Hardcoded fallback data — used when Supabase env isn't set OR query errors.
@@ -49,8 +56,7 @@ const fallbackConfig: SiteConfig = {
   remind: '@lchssv',
   email_1: 'vchen26@mylcusd.net',
   email_2: 'nchen26@mylcusd.net',
-  meeting_1: 'Grades 9–12 | Thursday, 3:30–5:00 PM | Room 315',
-  meeting_2: 'Grades 7–8 | Tuesday, 3:30–4:30 PM | Room 725',
+  ...managedConfig,
   announcement_text:
     'Spartan Vanguard hosts an annual spring math competition for middle and high school students. Organized and run entirely by high school volunteers, the event takes place at La Cañada High School. We welcome anyone with an interest in competitive math to join us, and participants and volunteers can enjoy free pizza!',
 }
@@ -156,7 +162,10 @@ export async function fetchConfig(): Promise<SiteConfig> {
     for (const row of data ?? []) {
       if (row.key) config[row.key] = row.value ?? ''
     }
-    return config
+    // Code-owned keys win over whatever the database holds. Without this a stale
+    // site_config row silently overrides correct code, which is exactly how the
+    // meeting schedule stayed wrong on the live site after the repo was fixed.
+    return { ...config, ...managedConfig }
   } catch (e) {
     console.error('Failed to fetch site config from Supabase:', e)
     return fallbackConfig

@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/sync-site-config.mjs && next build",
+    "sync-config": "node scripts/sync-site-config.mjs",
     "start": "next start",
     "lint": "eslint"
   },

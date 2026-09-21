@@ -136,6 +136,24 @@ All content (announcements, events, officers, site config) lives in Supabase. RL
 
 **Helper:** `is_admin()` SQL function used in RLS policies — checks `members.role = 'admin'` for `auth.uid()`.
 
+### Code-owned config keys (do not edit in /admin)
+
+`supabase/managed-config.json` holds the `site_config` keys that **code** owns
+(currently `meeting_1`, `meeting_2`). Two things consume it:
+
+1. `src/lib/data.ts` imports it as the fallback **and** re-applies it after
+   merging database rows in `fetchConfig()`, so a stale `site_config` row can
+   never override it on the public site.
+2. `scripts/sync-site-config.mjs` upserts those keys into Supabase on every
+   Vercel build (`npm run build` runs it first), using the
+   `SUPABASE_SERVICE_ROLE_KEY` already in the project env.
+
+To change the meeting schedule, edit `supabase/managed-config.json` and push —
+nothing else. Editing these keys in `/admin` is pointless; they are overwritten
+on the next deploy. Keys *not* listed in that file stay fully admin-editable.
+
+Run `npm run sync-config` to push them manually (needs `.env.local`).
+
 ### Content vs Code Changes
 
 - **Content (no code):** Sign in to `/admin` and use the dashboard. Changes appear immediately (server actions call `revalidatePath('/')`).
