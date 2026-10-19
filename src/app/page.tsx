@@ -2,10 +2,10 @@ import Link from "next/link"
 import Image from "next/image"
 import { fetchAnnouncements, fetchEvents, fetchConfig } from "@/lib/data"
 import { getCurrentMember } from "@/lib/auth"
-import { SiteShell, Figure, PhotoRow } from "@/components/site/site-shell"
+import { SiteShell, PageHead, Bar, PhotoRow, Question } from "@/components/site/site-shell"
 import { ProblemOfTheWeek } from "@/components/site/potw"
 import { SubscribeForm } from "@/components/subscribe-form"
-import { problemOfTheWeek } from "@/lib/potw"
+import { POTW_PROBLEMS, problemOfTheWeek } from "@/lib/potw"
 import { COMPETITIONS, PHOTOS, parseMeeting, formatDate } from "@/lib/site-content"
 
 export const revalidate = 60
@@ -33,92 +33,97 @@ export default async function Home() {
   return (
     <SiteShell currentMember={currentMember}>
       <main id="top" className="sv-main">
-        <section className="sv-hero" aria-label="Spartan Vanguard">
-          <div className="sv-hero-top sv-rise">
-            <p className="sv-lead">The student-run competition math club at La Cañada High School. Grades 7 to 12, free to join.</p>
-            <Link href="/signup" className="sv-button">Join the club</Link>
+        <PageHead
+          tone="orange"
+          tall
+          title={<>We do<br />hard math</>}
+          lead="The student-run competition math club at La Cañada High School. Grades 7 to 12, free to join."
+          action={<Link href="/signup" className="sv-button sv-button-big sv-button-orange">Join the club</Link>}
+          photo={PHOTOS.aleph3}
+        />
+
+        <section className="sv-tiles" aria-label="What we are">
+          <div className="sv-tile sv-tile-a sv-tone-black" data-sv-reveal>
+            <h2 className="sv-tile-shout">Free<br />to join</h2>
           </div>
-          <h1 className="sv-hero-name sv-rise sv-rise-2">Spartan <span className="sv-hero-break">Vanguard</span></h1>
-          <div className="sv-hero-bottom sv-rise sv-rise-3">
-            <p>A math club in La Cañada Flintridge, California</p>
-            <div className="sv-hero-links">
-              <Link href="/contact">Contact</Link>
-              <Link href="/donate">Donate</Link>
-              <a href="/events.ics">Calendar feed</a>
-            </div>
+          <div className="sv-tile sv-tile-b sv-tone-sage" data-sv-reveal style={{ transitionDelay: "80ms" }}>
+            <span className="sv-tile-figure">7–12</span>
+          </div>
+          <div className="sv-tile sv-tile-c" data-sv-reveal style={{ transitionDelay: "160ms" }}>
+            <Image src={PHOTOS.mathDay.src} alt={PHOTOS.mathDay.alt} width={PHOTOS.mathDay.width} height={PHOTOS.mathDay.height} sizes="(max-width: 720px) 50vw, 33vw" className="sv-tile-photo" />
+          </div>
+          <div className="sv-tile-text" data-sv-reveal>
+            <p>Grades go from seven to twelve, so a seventh grader and a senior can sit at the same table. We meet twice a week, work through problem sets, and travel to the Berkeley, Stanford and Caltech tournaments in the fall and spring. Every February and March we run our own: VMT for middle schoolers, Aleph for high schoolers, both at La Cañada High School, both free. Most people who join have never done a competition before. That is fine. Bring a pencil.</p>
           </div>
         </section>
 
-        <section className="sv-stairs" aria-label="What we do">
-          <p className="sv-stairs-text">
-            <span data-sv-reveal>We meet twice a week,</span>
-            <span data-sv-reveal style={{ transitionDelay: "80ms" }}>travel to four tournaments,</span>
-            <span data-sv-reveal style={{ transitionDelay: "160ms" }}>and host two of our own</span>
-            <span data-sv-reveal style={{ transitionDelay: "240ms" }}>every spring,</span>
-            <span data-sv-reveal style={{ transitionDelay: "320ms" }}>free, at La Cañada High.</span>
-          </p>
-          <div className="sv-stairs-photos">
-            <Image src={PHOTOS.bmt.src} alt={PHOTOS.bmt.alt} width={PHOTOS.bmt.width} height={PHOTOS.bmt.height} sizes="20vw" className="sv-stairs-photo" data-sv-reveal />
-            <Image src={PHOTOS.foothills.src} alt={PHOTOS.foothills.alt} width={PHOTOS.foothills.width} height={PHOTOS.foothills.height} sizes="20vw" className="sv-stairs-photo" data-sv-reveal />
+        <section id="meetings" className="sv-bars-section">
+          <div className="sv-bars">
+            <h2 className="sv-giant-word" data-sv-reveal>When</h2>
+            {meetings.map((m, i) => (
+              <Bar key={m.who} label={m.who} open={i === 0}>
+                <div className="sv-bar-line"><span>{m.when}</span><span>{m.where}</span></div>
+                <div className="sv-bar-line"><span>Problem sets and competition prep</span><span>Weekly</span></div>
+              </Bar>
+            ))}
+            {dated.map((c) => (
+              <Bar key={c.name} label={c.name}>
+                <div className="sv-bar-line"><span>{c.format}</span><span>{c.when}</span></div>
+                <div className="sv-bar-line"><span>{c.where}</span><span>{c.internal ? <Link href={c.internal}>Register</Link> : c.link ? <a href={c.link} rel="noopener">Website</a> : ""}</span></div>
+              </Bar>
+            ))}
           </div>
-          <p className="sv-stairs-note">Berkeley, Stanford and Caltech in the fall and spring. VMT and Aleph, ours, in February and March.</p>
         </section>
 
-        <section id="meetings" className="sv-lineup">
-          <h2 className="sv-lineup-heading" data-sv-reveal>Every week</h2>
-          {meetings.map((m) => (
-            <div className="sv-row" key={m.who} data-sv-reveal>
-              <span>{m.who}</span>
-              <span>Problem sets and competition prep</span>
-              <span>{m.where}</span>
-              <span className="sv-row-end">{m.when}</span>
-            </div>
-          ))}
-          <h2 className="sv-lineup-heading sv-lineup-heading-later" data-sv-reveal>The season</h2>
-          {dated.map((c) => (
-            <div className="sv-row" key={c.name} data-sv-reveal>
-              <span>
-                {c.internal ? <Link href={c.internal}>{c.name}</Link> : c.link ? <a href={c.link} rel="noopener">{c.name}</a> : c.name}
-              </span>
-              <span>{c.format}</span>
-              <span>{c.where}</span>
-              <span className="sv-row-end">{c.when}</span>
-            </div>
-          ))}
+        <section className="sv-slips" aria-label="Problems we write">
+          <Image src={PHOTOS.bmt.src} alt={PHOTOS.bmt.alt} width={PHOTOS.bmt.width} height={PHOTOS.bmt.height} sizes="100vw" className="sv-slips-photo" />
+          <div className="sv-slips-copy" data-sv-reveal>
+            <h2 className="sv-slips-heading">Problems we write</h2>
+            <p>One a week for the club, and every question at VMT and Aleph. These are this year’s weekly problems; the tournament sets stay sealed until the day.</p>
+          </div>
+          <div className="sv-slips-row">
+            {POTW_PROBLEMS.map((p, i) => (
+              <div key={p.statement} className={`sv-slip sv-slip-${i + 1}`} data-sv-reveal style={{ transitionDelay: `${i * 60}ms` }}>
+                <strong>{p.tag}</strong>
+                <span className="sv-slip-rule" aria-hidden="true">· · ·</span>
+                <span>{p.statement}</span>
+              </div>
+            ))}
+          </div>
         </section>
 
-        <Figure photo={PHOTOS.mathDay} />
-
-        <section id="latest" className="sv-split">
-          <h2 className="sv-h2" data-sv-reveal>Latest</h2>
-          <div className="sv-split-body">
-            {latest.length === 0 ? (
-              <p className="sv-large" data-sv-reveal>Nothing posted yet this season. Announcements from the officers appear here, and members can get them by email below.</p>
-            ) : (
-              latest.map((a) => (
-                <article key={a.id} className="sv-announcement" data-sv-reveal>
-                  <h3>{a.title}</h3>
-                  {a.body ? <p>{a.body}</p> : null}
-                  <p className="sv-muted">{formatDate(a.date)}{a.membersOnly ? ", members only" : ""}</p>
-                </article>
-              ))
-            )}
-            <h3 className="sv-h3" data-sv-reveal>Problem of the week</h3>
-            <ProblemOfTheWeek problem={problem} />
-            <h3 className="sv-h3" data-sv-reveal>Announcements by email</h3>
-            <SubscribeForm />
+        <section id="latest" className="sv-panel sv-tone-sage">
+          <div className="sv-panel-grid">
+            <h2 className="sv-panel-heading" data-sv-reveal>Latest</h2>
+            <div className="sv-panel-body">
+              {latest.length === 0 ? (
+                <p className="sv-large" data-sv-reveal>Nothing posted yet this season. Announcements from the officers appear here.</p>
+              ) : (
+                latest.map((a) => (
+                  <article key={a.id} className="sv-announcement" data-sv-reveal>
+                    <h3>{a.title}</h3>
+                    {a.body ? <p>{a.body}</p> : null}
+                    <p className="sv-muted">{formatDate(a.date)}{a.membersOnly ? ", members only" : ""}</p>
+                  </article>
+                ))
+              )}
+              <h3 className="sv-h3" data-sv-reveal>Problem of the week</h3>
+              <ProblemOfTheWeek problem={problem} />
+              <h3 className="sv-h3" data-sv-reveal>Announcements by email</h3>
+              <SubscribeForm />
+            </div>
           </div>
         </section>
 
         <PhotoRow photos={[PHOTOS.aleph3, PHOTOS.bmt, PHOTOS.foothills]} />
 
-        <Link href="/signup" className="sv-join-band">
-          <span className="sv-join-note">Sign up with the Google Classroom code, then come to a meeting.</span>
-          <svg aria-hidden="true" className="sv-join-arrow" width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M10 38 L38 10 M16 10 H38 V32" />
-          </svg>
-          <span className="sv-join-word">Join</span>
-        </Link>
+        <Question
+          top="Student"
+          bottom="or parent?"
+          left={<Link href="/signup" className="sv-button sv-button-wide sv-button-orange">Join the club</Link>}
+          right={<Link href="/donate" className="sv-button sv-button-wide sv-button-yellow">Donate</Link>}
+          note="Students get the Classroom code; parents get a receipt and a thank-you from the officers."
+        />
       </main>
     </SiteShell>
   )

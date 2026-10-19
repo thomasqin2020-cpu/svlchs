@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { getCurrentMember } from "@/lib/auth"
-import { SiteShell, Figure, PhotoRow } from "@/components/site/site-shell"
+import { SiteShell, PageHead, Bar, Figure, PhotoRow, Question } from "@/components/site/site-shell"
 import { RESOURCES, WORKSHEETS, ACTIVITIES, PHOTOS, type Resource } from "@/lib/site-content"
 
 export const metadata: Metadata = {
@@ -9,16 +9,16 @@ export const metadata: Metadata = {
   description: "Books, problem sets, worksheets and activities the Spartan Vanguard officers use for competition math.",
 }
 
-function ResourceList({ items }: { items: Resource[] }) {
+function Bars({ items, firstOpen = false }: { items: Resource[]; firstOpen?: boolean }) {
   return (
-    <div className="sv-split-body">
-      {items.map((r) => (
-        <article key={r.name} className="sv-announcement" data-sv-reveal>
-          <h3><a href={r.link} rel="noopener">{r.name}</a></h3>
-          <p>{r.description}</p>
-        </article>
+    <>
+      {items.map((r, i) => (
+        <Bar key={r.name} label={r.name} open={firstOpen && i === 0}>
+          <p className="sv-bar-text">{r.description}</p>
+          <div className="sv-bar-line"><span></span><span><a href={r.link} rel="noopener">Open</a></span></div>
+        </Bar>
       ))}
-    </div>
+    </>
   )
 }
 
@@ -27,38 +27,39 @@ export default async function ResourcesPage() {
   return (
     <SiteShell currentMember={currentMember}>
       <main id="top" className="sv-main">
-        <section className="sv-page-head">
-          <h1 className="sv-title sv-rise">Resources</h1>
-          <p className="sv-lead sv-rise sv-rise-2">Books, problem sets and worksheets for competition math, chosen by the officers. Everything here is free except the Art of Problem Solving volumes.</p>
-          <div className="sv-rise sv-rise-3"><a href={RESOURCES[0].link} className="sv-button" rel="noopener">Start with AMC Trivial</a></div>
-        </section>
+        <PageHead
+          tone="sage"
+          title={<>Start<br />here</>}
+          lead="Books, problem sets and worksheets for competition math, chosen by the officers. Everything here is free except the Art of Problem Solving volumes."
+          action={<a href={RESOURCES[0].link} className="sv-button sv-button-big sv-button-orange" rel="noopener">Open AMC Trivial</a>}
+          photo={PHOTOS.foothills}
+        />
 
-        <section className="sv-split">
-          <h2 className="sv-h2" data-sv-reveal>Recommended</h2>
-          <ResourceList items={RESOURCES} />
-        </section>
-
-        <Figure photo={PHOTOS.foothills} />
-
-        <section className="sv-split">
-          <h2 className="sv-h2" data-sv-reveal>Worksheets</h2>
-          <ResourceList items={WORKSHEETS} />
-        </section>
-
-        <section className="sv-split">
-          <h2 className="sv-h2" data-sv-reveal>Activities</h2>
-          <ResourceList items={ACTIVITIES} />
-        </section>
-
-        <PhotoRow photos={[PHOTOS.mathDay, PHOTOS.bmt, PHOTOS.aleph3]} />
-
-        <section className="sv-split">
-          <h2 className="sv-h2" data-sv-reveal>Practice with us</h2>
-          <div className="sv-split-body">
-            <p className="sv-large" data-sv-reveal>Meetings are where the problems get worked through on the board.</p>
-            <p data-sv-reveal><Link href="/signup" className="sv-button">Join the club</Link></p>
+        <section className="sv-bars-section">
+          <div className="sv-bars">
+            <h2 className="sv-giant-word" data-sv-reveal>Read</h2>
+            <Bars items={RESOURCES} firstOpen />
           </div>
         </section>
+
+        <Figure photo={PHOTOS.bmt} tone="orange" />
+
+        <section className="sv-bars-section">
+          <div className="sv-bars">
+            <h2 className="sv-giant-word" data-sv-reveal>Do</h2>
+            <Bars items={[...WORKSHEETS, ...ACTIVITIES]} />
+          </div>
+        </section>
+
+        <PhotoRow photos={[PHOTOS.mathDay, PHOTOS.aleph3, PHOTOS.foothills]} />
+
+        <Question
+          top="Read"
+          bottom="or come?"
+          left={<a href={RESOURCES[1].link} className="sv-button sv-button-wide sv-button-yellow" rel="noopener">The AoPS books</a>}
+          right={<Link href="/signup" className="sv-button sv-button-wide sv-button-orange">Join the club</Link>}
+          note="Meetings are where the problems get worked through on the board, with people who have seen them before."
+        />
       </main>
     </SiteShell>
   )
