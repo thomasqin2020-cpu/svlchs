@@ -1,6 +1,20 @@
 import type { Metadata } from "next";
-import { Inter, Inter_Tight, JetBrains_Mono } from "next/font/google";
+import { Inter, Inter_Tight, JetBrains_Mono, Anton, Work_Sans } from "next/font/google";
 import "./globals.css";
+
+// Public site faces: a compressed heavy display for the shouts, a plain
+// grotesk for everything read. Admin and auth pages keep Inter below.
+const anton = Anton({
+  variable: "--font-anton",
+  subsets: ["latin"],
+  weight: "400",
+});
+
+const workSans = Work_Sans({
+  variable: "--font-work",
+  subsets: ["latin"],
+  weight: ["400", "600"],
+});
 
 const inter = Inter({
   variable: "--font-inter",
@@ -38,7 +52,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${interTight.variable} ${jetbrainsMono.variable}`}>
+    <html lang="en" className={`${inter.variable} ${interTight.variable} ${jetbrainsMono.variable} ${anton.variable} ${workSans.variable}`}>
       <body>{children}</body>
     </html>
   );
