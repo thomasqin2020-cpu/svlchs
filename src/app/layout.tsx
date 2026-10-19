@@ -1,6 +1,21 @@
 import type { Metadata } from "next";
-import { Inter, Inter_Tight, JetBrains_Mono } from "next/font/google";
+import { Inter, Inter_Tight, JetBrains_Mono, Fraunces, Hanken_Grotesk } from "next/font/google";
 import "./globals.css";
+
+// Public site faces: a hairline serif for the name and specimens, a plain
+// grotesk for everything read. Admin and auth pages keep Inter below.
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
+  subsets: ["latin"],
+  weight: "variable",
+  axes: ["opsz"],
+});
+
+const hanken = Hanken_Grotesk({
+  variable: "--font-hanken",
+  subsets: ["latin"],
+  weight: ["400", "500"],
+});
 
 const inter = Inter({
   variable: "--font-inter",
@@ -38,7 +53,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${interTight.variable} ${jetbrainsMono.variable}`}>
+    <html lang="en" className={`${inter.variable} ${interTight.variable} ${jetbrainsMono.variable} ${fraunces.variable} ${hanken.variable}`}>
       <body>{children}</body>
     </html>
   );
